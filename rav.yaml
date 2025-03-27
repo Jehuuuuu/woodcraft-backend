@@ -1,0 +1,13 @@
+scripts:
+  server:
+    - cd src/woodcraft_db & python manage.py runserver
+  admin:
+    - cd src/woodcraft_db & python manage.py createsuperuser
+  makemigrations:
+    - cd src/woodcraft_db & python manage.py makemigrations
+  migrate:
+    - cd src/woodcraft_db & python manage.py migrate
+  shell:
+    - cd src/woodcraft_db & python manage.py shell
+  venv:
+    - venv\Scripts\activate.bat
