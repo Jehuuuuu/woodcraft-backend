@@ -1,1 +1,4 @@
 .env
+src/woodcraft_db/db.sqlite3
+src/woodcraft_db/api/__pycache__/schemas.cpython-313.pyc
+src/woodcraft_db/woodcraft_db/__pycache__/api.cpython-313.pyc

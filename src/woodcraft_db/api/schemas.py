@@ -22,7 +22,8 @@ class CustomerDesignSchema(Schema):
 class CategorySchema(ModelSchema):
     class Meta:
         model = Category
-        fields = ['name']
+        fields = '__all__'
+        exclude = ['created_at', 'updated_at']
 
 class ProductSchema(ModelSchema):
     class Meta:
