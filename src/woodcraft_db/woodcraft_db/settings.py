@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-%5h6p#juk^l+!so4+ex96j9v3ju=cz+kn7^vap&73y=!r3^#wu
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['woodcraft-backend.onrender.com', 'localhost']
 
 AUTH_USER_MODEL = 'api.CustomUser'
 
