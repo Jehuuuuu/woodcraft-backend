@@ -60,7 +60,8 @@ MIDDLEWARE = [
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # Allow requests from Next.js frontend server
+    "http://localhost:3000",  
+    "https://woodcraft-frontend-qkiz63nsd-jehuuuuus-projects.vercel.app",
 ]
 CSRF_TRUSTED_ORIGINS = ['http://localhost:3000']
 
