@@ -6,7 +6,6 @@ from ninja.security import django_auth
 from api.schemas import *
 import logging
 from api.ai_service import generate_3d_model
-import os
 
 api = NinjaAPI()
 logger = logging.getLogger(__name__)
