@@ -20,7 +20,10 @@ def login_view(request, payload: SignInSchema):
     user = authenticate(request, username = payload.email, password = payload.password)
     if user is not None:
         login(request, user)
-        return {"success": True}
+        return {"success": True,
+                "email": request.user.email,
+            "firstName": request.user.first_name,
+            "lastName": request.user.last_name}
     return {"success": False, "message": "Invalid Credentials"}
 
 @api.post("/logout", auth=django_auth)

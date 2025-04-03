@@ -52,7 +52,7 @@ class Product(models.Model):
     stock = models.PositiveIntegerField()
     available = models.BooleanField(default=True)
     featured = models.BooleanField(default=False)
-    # image = models.ImageField(upload_to='products/')
+    image = models.ImageField(upload_to='products/')
     default_material = models.CharField(max_length=50, default='oak')
 
     created_at = models.DateTimeField(auto_now_add=True)
