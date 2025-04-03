@@ -63,7 +63,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  
     "https://woodcraft-frontend-qkiz63nsd-jehuuuuus-projects.vercel.app",
 ]
-CSRF_TRUSTED_ORIGINS = ['http://localhost:3000']
+CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'https://woodcraft-frontend-qkiz63nsd-jehuuuuus-projects.vercel.app']
 
 ROOT_URLCONF = 'woodcraft_db.urls'
 
