@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 logger = logging.getLogger(__name__)
 
-def poll_task_status(task_id, max_retries=100, initial_delay=3, backoff_factor=2):
+def poll_task_status(task_id):
     API_KEY = os.getenv('API_KEY')
     if not API_KEY:
         logger.error("API_KEY environment variable not set")
@@ -15,46 +15,23 @@ def poll_task_status(task_id, max_retries=100, initial_delay=3, backoff_factor=2
 
     url = f"https://api.tripo3d.ai/v2/openapi/task/{task_id}"
     headers = {"Authorization": f"Bearer {API_KEY}"}
-    
-    current_delay = initial_delay
-    for attempt in range(max_retries):
-        try:
-            # Make API call to check status
-            response = requests.get(url, headers=headers, timeout=30)
-            if not response.ok:
-                logger.warning(f"API error (attempt {attempt + 1}/{max_retries}): HTTP {response.status_code}")
-                continue
 
-            response_data = response.json()
-            task_data = response_data.get('data', {})
-            status = task_data.get('status')
+    try:
+        response = requests.get(url, headers=headers, timeout=30)
+        response_data = response.json()
+        model_data = response_data.get('data', {})
+        output = model_data.get('output', {})
+        return {
+            'status': model_data.get('status'),
+            'model_url': output.get('pbr_model'),
+            'thumbnail_url': output.get('rendered_image'),
+        }
 
-            if status == "success":
-                logger.info(f"Task {task_id} completed successfully")
-                return task_data
-            
-            elif status in ["failed", "error"]:
-                logger.error(f"Task {task_id} failed with status: {status}")
-                return None
-            
-            if status in ["queued", "running"]:
-                logger.info(f"Task {task_id} {status} (attempt {attempt + 1}/{max_retries})")
-                time.sleep(current_delay)
-                current_delay *= backoff_factor  
-                continue
-
-            logger.error(f"Unexpected task status: {status}")
+    except requests.exceptions.RequestException as e:
             return None
 
-        except requests.exceptions.RequestException as e:
-            logger.warning(f"Polling error (attempt {attempt + 1}/{max_retries}): {str(e)}")
-            time.sleep(current_delay)
-            current_delay *= backoff_factor
 
-    logger.error(f"Polling timeout after {max_retries} attempts")
-    return None
-
-def generate_3d_model(design_prompt, material, dimensions=None, generation_type='text_to_model', preview_task_id=None):
+def initiate_task_id(design_prompt, material, dimensions=None, generation_type='text_to_model', preview_task_id=None):
     API_KEY = os.getenv('API_KEY')
     url = "https://api.tripo3d.ai/v2/openapi/task"
 
@@ -98,20 +75,15 @@ def generate_3d_model(design_prompt, material, dimensions=None, generation_type=
             response.raise_for_status()
             
             response_data = response.json()
+
             task_id = response_data.get('data', {}).get('task_id')
+
             if not task_id:
                 logger.error("No task ID in response")
                 return None
-
-            final_data = poll_task_status(task_id)
-            if not final_data or final_data.get('status') != 'success':
-                return None
-
+            
             return {
                 'task_id': task_id,
-                'status': final_data.get('status'),
-                'rendered_model': final_data.get('output', {}).get('pbr_model', {}),
-                'thumbnail': final_data.get('thumbnail')
             }
 
         except requests.exceptions.HTTPError as e:

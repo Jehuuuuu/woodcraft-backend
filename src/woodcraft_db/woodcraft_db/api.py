@@ -5,7 +5,7 @@ from django.middleware.csrf import get_token
 from ninja.security import django_auth
 from api.schemas import *
 import logging
-from api.ai_service import generate_3d_model
+from api.ai_service import initiate_task_id, poll_task_status
 
 api = NinjaAPI()
 logger = logging.getLogger(__name__)
@@ -51,7 +51,7 @@ def get_user(request):
             "message": "User not logged in"
         }
 
-@api.post("/generate_3d_model")
+@api.post("/initiate_task_id")
 def product_configurator(request, payload: CustomerDesignSchema):
     decoration_type_name = payload.decoration_type.replace('_', ' ').title() if payload.decoration_type else ''
     design_prompt = f"{decoration_type_name} {payload.design_description}"
@@ -61,7 +61,7 @@ def product_configurator(request, payload: CustomerDesignSchema):
                     'thickness':  payload.thickness
                 }
 
-    response_data = generate_3d_model(
+    response_data = initiate_task_id(
         design_prompt=design_prompt,
         material=payload.material,
         dimensions=dimensions
@@ -109,9 +109,36 @@ def product_configurator(request, payload: CustomerDesignSchema):
             'estimated_price': float(estimated_price),
             'complexity_score': complexity_score,
             'production_time': production_time,
-            'model_data': response_data,
-            'message': '3D Model generated successfully'
+            'task_id': response_data.get('task_id'),
+            'message': 'Model generation started successfully'
         })
+
+@api.get("/get_task_status/{task_id}")
+def get_task_status(request, task_id):
+    response_data = poll_task_status(task_id)
+    
+    if not response_data:
+        return {
+            'success': False,
+            'message': 'Failed to retrieve task status'
+        }
+    
+    if response_data.get('status') == 'success':
+        return {
+            'success': True,
+            'task_id': task_id,
+            'task_status': "Success",
+            'message': 'Task completed successfully',
+            'data': response_data
+        }
+    
+    return {
+        'success': False,
+        'task_id': task_id,
+        'task_status': "Generating",
+        'message': 'Task is still in progress',
+        'data': response_data
+    }
 
 @api.get("/get_categories", response=list[CategorySchema])
 def get_categories(request):
