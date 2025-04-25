@@ -12,8 +12,9 @@ from django.http import HttpResponse
 logger = logging.getLogger(__name__)
 
 api = NinjaAPI(csrf=True)
-@api.get("/csrf")
+@api.post("/csrf")
 @ensure_csrf_cookie
+@csrf_exempt
 def get_csrf_token(request):
     return HttpResponse('CSRF token set', status=200)
 
