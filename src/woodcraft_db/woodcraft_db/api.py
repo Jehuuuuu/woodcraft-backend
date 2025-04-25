@@ -12,6 +12,7 @@ from django.http import HttpResponse
 logger = logging.getLogger(__name__)
 
 api = NinjaAPI(csrf=True)
+
 @api.post("/csrf")
 @ensure_csrf_cookie
 @csrf_exempt

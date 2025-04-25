@@ -27,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-%5h6p#juk^l+!so4+ex96j9v3ju=cz+kn7^vap&73y=!r3^#wu'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['woodcraft-backend.onrender.com', 'localhost']
 
@@ -66,13 +66,14 @@ CORS_ALLOWED_ORIGINS = [
 CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'https://woodcraft-frontend.vercel.app', 'https://woodcraft-backend.onrender.com']
 CSRF_COOKIE_SECURE = True
 CSRF_COOKIE_SAMESITE = None
-# CSRF_COOKIE_DOMAIN = 'onrender.com'
+CSRF_COOKIE_DOMAIN = None 
+CSRF_COOKIE_HTTPONLY = False
 
-SESSION_COOKIE_SECURE = True 
+SESSION_COOKIE_SECURE = True
 SESSION_COOKIE_SAMESITE = None
 SESSION_COOKIE_HTTPONLY = True
-# SESSION_COOKIE_DOMAIN = 'onrender.com'
 SESSION_COOKIE_PATH = '/'
+SESSION_COOKIE_DOMAIN = None
 ROOT_URLCONF = 'woodcraft_db.urls'
 
 TEMPLATES = [
