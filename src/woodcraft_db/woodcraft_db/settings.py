@@ -64,14 +64,14 @@ CORS_ALLOWED_ORIGINS = [
     "https://woodcraft-frontend.vercel.app",
 ]
 CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'https://woodcraft-frontend.vercel.app']
-CSRF_COOKIE_SECURE = True
-CSRF_COOKIE_SAMESITE = 'None'
-CSRF_COOKIE_DOMAIN = 'onrender.com'
+CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_DOMAIN = 'None'
 
 SESSION_COOKIE_SECURE = True 
-SESSION_COOKIE_SAMESITE = 'None'
-SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_DOMAIN ='onrender.com'
+SESSION_COOKIE_SAMESITE = 'Lax'
+# SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_DOMAIN ='None'
 SESSION_COOKIE_NAME = 'sessionid'  
 SESSION_COOKIE_PATH = '/'
 ROOT_URLCONF = 'woodcraft_db.urls'
