@@ -7,7 +7,7 @@ from api.schemas import *
 import logging
 from api.ai_service import initiate_task_id, poll_task_status
 
-api = NinjaAPI()
+api = NinjaAPI(csrf=True)
 logger = logging.getLogger(__name__)
 
 @api.get("/set-csrf-token")
