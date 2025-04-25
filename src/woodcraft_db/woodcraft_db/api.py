@@ -8,12 +8,12 @@ import logging
 from api.ai_service import initiate_task_id, poll_task_status
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.http import HttpResponse
-api = NinjaAPI(csrf=True)
+
 logger = logging.getLogger(__name__)
 
-@api.post("/csrf")
+api = NinjaAPI(csrf=True)
+@api.get("/csrf")
 @ensure_csrf_cookie
-@csrf_exempt
 def get_csrf_token(request):
     return HttpResponse('CSRF token set', status=200)
 
