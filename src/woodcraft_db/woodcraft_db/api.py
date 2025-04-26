@@ -36,7 +36,6 @@ def login_view(request, payload: SignInSchema):
         response = JSONResponse({"success": True,
                 "user": user_data}
         )
-        response.set_cookie('sessionid', request.COOKIES.get('sessionid'), httponly=True, secure=True, samesite='Lax')
         return response
     return {"success": False, "message": "Invalid Credentials"}
 
@@ -56,7 +55,8 @@ def register_view(request, payload: SignUpSchema):
 @api.get("/user", auth=django_auth)
 def get_user(request):
     if request.user:
-        return{
+        return{ 
+            "success": True,
             "email": request.user.email,
             "firstName": request.user.first_name,
             "lastName": request.user.last_name
