@@ -8,7 +8,7 @@ import logging
 from api.ai_service import initiate_task_id, poll_task_status
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.http import HttpResponse
-
+from django.http import JsonResponse as JSONResponse
 logger = logging.getLogger(__name__)
 
 api = NinjaAPI(csrf=True)
@@ -28,10 +28,16 @@ def login_view(request, payload: SignInSchema):
     user = authenticate(request, username = payload.email, password = payload.password)
     if user is not None:
         login(request, user)
-        return {"success": True,
-                "email": request.user.email,
-            "firstName": request.user.first_name,
-            "lastName": request.user.last_name}
+        user_data = {
+            "email": user.email,
+            "firstName": user.first_name,
+            "lastName": user.last_name
+        }
+        response = JSONResponse({"success": True,
+                "user": user_data}
+        )
+        response.set_cookie('sessionid', request.COOKIES.get('sessionid'), httponly=True, secure=True, samesite='Lax')
+        return response
     return {"success": False, "message": "Invalid Credentials"}
 
 @api.post("/logout", auth=django_auth)
