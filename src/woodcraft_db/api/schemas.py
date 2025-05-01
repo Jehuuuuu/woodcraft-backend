@@ -1,5 +1,5 @@
 from ninja import ModelSchema, Schema
-from .models import CustomUser as User, CustomerDesign, Category, Product
+from .models import CustomUser as User, CustomerDesign, Category, Product, CartItem
 
 class SignInSchema(ModelSchema):
     class Meta:
@@ -30,3 +30,14 @@ class ProductSchema(ModelSchema):
         model = Product
         fields = '__all__'
         exclude = ['created_at', 'updated_at']
+
+class AddToCartSchema(Schema):
+    user: int
+    product_id: int
+    quantity: int
+
+class CartItemSchema(ModelSchema):
+    class Meta:
+        model = CartItem
+        fields = '__all__'
+        exclude = ['id']

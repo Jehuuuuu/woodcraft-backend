@@ -1,6 +1,7 @@
 from ninja import NinjaAPI
 from django.contrib.auth import login, authenticate, logout
 from api.models import CustomUser as User
+from api. models import *
 from django.middleware.csrf import get_token
 from ninja.security import django_auth
 from api.schemas import *
@@ -47,8 +48,11 @@ def logout_view(request):
 @api.post("/register")
 def register_view(request, payload: SignUpSchema):
     try:
-        User.objects.create_user(username=payload.email, email=payload.email, first_name = payload.first_name, last_name = payload.last_name , password = payload.password)
-        return {"success": "User registered successfully"}
+        user = User.objects.create_user(username=payload.email, email=payload.email, first_name = payload.first_name, last_name = payload.last_name , password = payload.password)
+        cart = Cart.objects.create(user=user)
+
+        return {"success": "User registered successfully",
+                "cart": cart.user.email}
     except Exception as e:
         return {"error": str(e)}
 
@@ -57,6 +61,7 @@ def get_user(request):
     if request.user:
         return{ 
             "success": True,
+            "id": request.user.id,
             "email": request.user.email,
             "firstName": request.user.first_name,
             "lastName": request.user.last_name
@@ -174,3 +179,34 @@ def create_category(request, payload: CategorySchema):
 def create_product(request, payload: ProductSchema):
     product = Product.objects.create(**payload.dict())
     return product
+
+@api.post("add_to_cart", response = AddToCartSchema)
+def add_to_Cart(request, payload: AddToCartSchema):
+    try:
+        user = CustomUser.objects.get(id=payload.user)
+        cart = Cart.objects.get(user=user)
+        product = Product.objects.get(id=payload.product_id)
+        quantity = payload.quantity
+        added_to_cart = CartItem.objects.create(
+            cart=cart,
+            product=product,
+            quantity=quantity,
+        )
+        print(f"Added to cart: {added_to_cart}")
+        return added_to_cart
+    except Exception as e:
+        
+        return {"error": str(e)}
+
+@api.get("/cart", response=list[CartItemSchema])
+def get_cart(request):
+    try:
+        # user = request.user
+        # cart = Cart.objects.get(user=user)
+        # cart_items = CartItem.objects.filter(cart=cart)
+        cart_items = CartItem.objects.all()
+        return cart_items
+    except Cart.DoesNotExist:
+        return {"error": "Cart not found"}
+    except Exception as e:
+        return {"error": str(e)}
