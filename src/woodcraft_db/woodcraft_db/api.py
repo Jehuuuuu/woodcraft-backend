@@ -21,8 +21,6 @@ def get_csrf_token(request):
     return HttpResponse('CSRF token set', status=200)
 
 @api.get("/set-csrf-token")
-@ensure_csrf_cookie
-@csrf_exempt
 def set_csrf_token(request):
     return {"csrf_token": get_token(request)}
 
