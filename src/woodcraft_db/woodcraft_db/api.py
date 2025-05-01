@@ -193,7 +193,11 @@ def add_to_Cart(request, payload: AddToCartSchema):
             quantity=quantity,
         )
         print(f"Added to cart: {added_to_cart}")
-        return added_to_cart
+        return {
+            "user": payload.user,
+            "product_id": payload.product_id,
+            "quantity": quantity
+        }
     except Exception as e:
         
         return {"error": str(e)}
