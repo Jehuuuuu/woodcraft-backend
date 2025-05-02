@@ -35,7 +35,12 @@ class AddToCartSchema(Schema):
     user: int
     product_id: int
     quantity: int
-    message: str
+
+class AddToCartResponseSchema(Schema):
+    user: int
+    product_id: int
+    quantity: int
+    message:str
 
 class CartItemSchema(Schema):
     cart_items: list

@@ -180,7 +180,7 @@ def create_product(request, payload: ProductSchema):
     product = Product.objects.create(**payload.dict())
     return product
 
-@api.post("add_to_cart", response=AddToCartSchema)
+@api.post("add_to_cart", response=AddToCartResponseSchema)
 def add_to_cart(request, payload: AddToCartSchema):
     try:
         # Get the user and their cart
@@ -227,7 +227,7 @@ def add_to_cart(request, payload: AddToCartSchema):
         return {"error": str(e)}
 
 @api.get("/cart", response=CartItemSchema)
-def get_cart(request, user):
+def get_cart(request, user : int):
     try:
         cart = Cart.objects.get(user=user)
         cart_items = CartItem.objects.filter(cart=cart)
