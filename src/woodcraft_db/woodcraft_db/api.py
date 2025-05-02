@@ -234,6 +234,7 @@ def get_cart(request, user : int):
         return {
             "cart_items": [
                 {
+                    "cart item id": item.id,
                     "product_name": item.product.name,
                     "quantity": item.quantity,
                     "price": item.product.price,
@@ -247,5 +248,28 @@ def get_cart(request, user : int):
     
     except Cart.DoesNotExist:
         return {"error": "Cart not found"}
+    except Exception as e:
+        return {"error": str(e)}
+    
+@api.put("/update_cart_item/{cart_item_id}")
+def update_cart_item(request, cart_item_id: int, payload: UpdateCartItemSchema):
+    try:
+        cart_item = CartItem.objects.get(id=cart_item_id)
+        cart_item.quantity = payload.quantity  
+        cart_item.save()
+        return {"message": "Cart item updated successfully"}
+    except CartItem.DoesNotExist:
+        return {"error": "Cart item not found"}
+    except Exception as e:
+        return {"error": str(e)}
+
+@api.delete("/delete_cart_item/{cart_item_id}")
+def delete_cart_item(request, cart_item_id: int):
+    try:
+        cart_item = CartItem.objects.get(id=cart_item_id)
+        cart_item.delete()
+        return {"message": "Cart item deleted successfully"}
+    except CartItem.DoesNotExist:
+        return {"error": "Cart item not found"}
     except Exception as e:
         return {"error": str(e)}

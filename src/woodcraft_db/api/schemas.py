@@ -46,3 +46,6 @@ class CartItemSchema(Schema):
     cart_items: list
     total_price: float
     total_items: int
+
+class UpdateCartItemSchema(Schema):
+    quantity: int  
