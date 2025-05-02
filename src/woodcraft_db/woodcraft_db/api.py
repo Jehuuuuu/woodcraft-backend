@@ -234,7 +234,7 @@ def get_cart(request, user : int):
         return {
             "cart_items": [
                 {
-                    "cart item id": item.id,
+                    "cart_item_id": item.id,
                     "product_name": item.product.name,
                     "quantity": item.quantity,
                     "price": item.product.price,
