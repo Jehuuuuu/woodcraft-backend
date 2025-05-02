@@ -35,9 +35,9 @@ class AddToCartSchema(Schema):
     user: int
     product_id: int
     quantity: int
+    message: str
 
-class CartItemSchema(ModelSchema):
-    class Meta:
-        model = CartItem
-        fields = '__all__'
-        exclude = ['id']
+class CartItemSchema(Schema):
+    cart_items: list
+    total_price: float
+    total_items: int

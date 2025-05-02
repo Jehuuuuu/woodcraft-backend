@@ -180,36 +180,71 @@ def create_product(request, payload: ProductSchema):
     product = Product.objects.create(**payload.dict())
     return product
 
-@api.post("add_to_cart", response = AddToCartSchema)
-def add_to_Cart(request, payload: AddToCartSchema):
+@api.post("add_to_cart", response=AddToCartSchema)
+def add_to_cart(request, payload: AddToCartSchema):
     try:
+        # Get the user and their cart
         user = CustomUser.objects.get(id=payload.user)
         cart = Cart.objects.get(user=user)
         product = Product.objects.get(id=payload.product_id)
         quantity = payload.quantity
-        added_to_cart = CartItem.objects.create(
-            cart=cart,
-            product=product,
-            quantity=quantity,
-        )
-        print(f"Added to cart: {added_to_cart}")
-        return {
-            "user": payload.user,
-            "product_id": payload.product_id,
-            "quantity": quantity
-        }
+
+        # Check if the product already exists in the cart
+        existing_items = CartItem.objects.filter(cart=cart, product=product)
+
+        if existing_items.exists():
+            # If duplicates exist, sum their quantities
+            total_quantity = quantity + sum(item.quantity for item in existing_items)
+
+            # Keep the first cart item and update its quantity
+            primary_item = existing_items.first()
+            primary_item.quantity = total_quantity
+            primary_item.save()
+
+            # Delete the other duplicate items
+            existing_items.exclude(id=primary_item.id).delete()
+
+            return {
+                "user": payload.user,
+                "product_id": payload.product_id,
+                "quantity": total_quantity,
+                "message": "Merged duplicate items in the cart",
+            }
+        else:
+            # If no duplicates, create a new cart item
+            added_to_cart = CartItem.objects.create(
+                cart=cart,
+                product=product,
+                quantity=quantity,
+            )
+            return {
+                "user": payload.user,
+                "product_id": payload.product_id,
+                "quantity": added_to_cart.quantity,
+                "message": "Item added to cart",
+            }
     except Exception as e:
-        
         return {"error": str(e)}
 
-@api.get("/cart", response=list[CartItemSchema])
-def get_cart(request):
+@api.get("/cart", response=CartItemSchema)
+def get_cart(request, user):
     try:
-        # user = request.user
-        # cart = Cart.objects.get(user=user)
-        # cart_items = CartItem.objects.filter(cart=cart)
-        cart_items = CartItem.objects.all()
-        return cart_items
+        cart = Cart.objects.get(user=user)
+        cart_items = CartItem.objects.filter(cart=cart)
+        return {
+            "cart_items": [
+                {
+                    "product_name": item.product.name,
+                    "quantity": item.quantity,
+                    "price": item.product.price,
+                    "total_price": item.quantity * item.product.price,
+                }
+                for item in cart_items
+            ],
+            "total_price": sum(item.quantity * item.product.price for item in cart_items),
+            "total_items": sum(item.quantity for item in cart_items),
+        }
+    
     except Cart.DoesNotExist:
         return {"error": "Cart not found"}
     except Exception as e:
