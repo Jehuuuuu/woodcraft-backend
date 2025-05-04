@@ -176,11 +176,7 @@ def create_customer_design(request, payload: CreateCustomerDesignSchema):
 def get_customer_designs(request, user_id: int):
     try:
         customer_designs = CustomerDesign.objects.filter(user=user_id)
-        return {
-            "success": True,
-            "data": customer_designs,
-            "message": "Customer designs retrieved successfully",
-        }
+        return customer_designs
     except Exception as e:
         return {
             "success": False,

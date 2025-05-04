@@ -13,10 +13,11 @@ class CustomUser(AbstractUser):
     
 class CustomerDesign(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    design_prompt = models.CharField(max_length=500)
+    design_description = models.CharField(max_length=500)
     decoration_type = models.CharField(max_length=100, blank=True, null=True)
     material = models.CharField(max_length=100, blank=True, null=True)
-    generated_model = models.URLField(null=True, blank=True)
+    model_url = models.URLField(null=True, blank=True)
+    estimated_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     model_image = models.URLField(null=True, blank=True)
     estimated_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     notes = models.TextField(blank=True)
