@@ -19,6 +19,16 @@ class CustomerDesignSchema(Schema):
     width: float
     thickness: float
 
+class CreateCustomerDesignSchema(Schema):
+    user_id: int
+    material: str
+    decoration_type: str
+    design_description: str
+    estimated_price: float
+    model_url: str
+    model_image: str
+
+
 class CategorySchema(ModelSchema):
     class Meta:
         model = Category

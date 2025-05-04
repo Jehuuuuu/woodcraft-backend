@@ -111,12 +111,6 @@ def product_configurator(request, payload: CustomerDesignSchema):
     
     estimated_price = base_price * (complexity_score / 100) * material_factor * max(1, size_factor)
     
-    # customer_design = CustomerDesign.objects.create(
-    #     user=request.user,
-    #     design_prompt=design_prompt,
-    #     estimated_price=estimated_price,
-    #     status='generated'
-    # )
 
     production_days = int((complexity_score / 10) + (size_factor * 2)) + 5
     production_time = f"{production_days} days"
@@ -130,7 +124,7 @@ def product_configurator(request, payload: CustomerDesignSchema):
             'complexity_score': complexity_score,
             'production_time': production_time,
             'task_id': response_data.get('task_id'),
-            'message': 'Model generation started successfully'
+            'message': 'Model generation started successfully',
         })
 
 @api.get("/get_task_status/{task_id}")
@@ -159,6 +153,40 @@ def get_task_status(request, task_id):
         'message': 'Task is still in progress',
         'data': response_data
     }
+
+@api.post("/create_design")
+def create_customer_design(request, payload: CreateCustomerDesignSchema):
+    customer_design = CustomerDesign.objects.create(
+        user = CustomUser.objects.get(id=payload.user_id),
+        design_prompt=payload.design_description,
+        decoration_type=payload.decoration_type,
+        material=payload.material,
+        generated_model=payload.model_url,
+        model_image=payload.model_image,
+        estimated_price=payload.estimated_price,
+        status='pending',
+    )
+    return {
+        "success": True,
+        "data": customer_design,
+        "message": "Customer design created successfully",
+    }
+
+@api.get("/get_customer_designs", response=list[CreateCustomerDesignSchema])
+def get_customer_designs(request, user_id: int):
+    try:
+        customer_designs = CustomerDesign.objects.filter(user=user_id)
+        return {
+            "success": True,
+            "data": customer_designs,
+            "message": "Customer designs retrieved successfully",
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to retrieve customer designs",
+        }
 
 @api.get("/get_categories", response=list[CategorySchema])
 def get_categories(request):
@@ -236,6 +264,7 @@ def get_cart(request, user : int):
                 {
                     "cart_item_id_num": item.id,
                     "product_name": item.product.name,
+                    "product_image": item.product.image.url if item.product.image else None,
                     "quantity": item.quantity,
                     "price": item.product.price,
                     "total_price": item.quantity * item.product.price,
