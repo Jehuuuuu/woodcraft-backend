@@ -16,8 +16,8 @@ class CustomerDesign(models.Model):
     design_description = models.CharField(max_length=500) 
     decoration_type = models.CharField(max_length=100, blank=True, null=True) 
     material = models.CharField(max_length=100, blank=True, null=True) 
-    model_url = models.CharField(null=True, blank=True, max_length=500) 
-    model_image = models.CharField(null=True, blank=True, max_length=500) 
+    model_url = models.TextField(null=True, blank=True) 
+    model_image = models.TextField(null=True, blank=True) 
     estimated_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True) 
     notes = models.TextField(blank=True) 
     status = models.CharField(max_length=20, choices=[ 
