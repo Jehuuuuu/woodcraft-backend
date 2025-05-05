@@ -12,30 +12,29 @@ class CustomUser(AbstractUser):
         return self.email
     
 class CustomerDesign(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    design_description = models.CharField(max_length=500)
-    decoration_type = models.CharField(max_length=100, blank=True, null=True)
-    material = models.CharField(max_length=100, blank=True, null=True)
-    model_url = models.CharField(null=True, blank=True, max_length=900)
-    estimated_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    model_image = models.CharField(null=True, blank=True, max_length=900)
-    estimated_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    notes = models.TextField(blank=True)
-    status = models.CharField(max_length=20, choices=[
-        ('pending', 'Pending'),
-        ('generating', 'Generating Model'),
-        ('generated', 'Model Generated'),
-        ('approved', 'Approved'),
-        ('in_progress', 'In Progress'),
-        ('completed', 'Completed'),
-        ('rejected', 'Rejected')
-    ], default='pending')
-    created_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE) 
+    design_description = models.CharField(max_length=500) 
+    decoration_type = models.CharField(max_length=100, blank=True, null=True) 
+    material = models.CharField(max_length=100, blank=True, null=True) 
+    model_url = models.CharField(null=True, blank=True, max_length=900) 
+    model_image = models.CharField(null=True, blank=True, max_length=900) 
+    estimated_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True) 
+    notes = models.TextField(blank=True) 
+    status = models.CharField(max_length=20, choices=[ 
+        ('pending', 'Pending'), 
+        ('generating', 'Generating Model'), 
+        ('generated', 'Model Generated'), 
+        ('approved', 'Approved'), 
+        ('in_progress', 'In Progress'), 
+        ('completed', 'Completed'), 
+        ('rejected', 'Rejected') 
+    ], default='pending') 
+    created_at = models.DateTimeField(auto_now_add=True) 
     updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
+    
+    def __str__(self): 
         return f'{self.user} - Custom Design'
-
+    
 class Category(models.Model):
     name = models.CharField(max_length=200)
     created_at = models.DateTimeField(auto_now_add=True)
