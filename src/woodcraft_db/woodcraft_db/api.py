@@ -158,10 +158,10 @@ def get_task_status(request, task_id):
 def create_customer_design(request, payload: CreateCustomerDesignSchema):
     customer_design = CustomerDesign.objects.create(
         user = CustomUser.objects.get(id=payload.user_id),
-        design_prompt=payload.design_description,
+        design_description=payload.design_description,
         decoration_type=payload.decoration_type,
         material=payload.material,
-        generated_model=payload.model_url,
+        model_url=payload.model_url,
         model_image=payload.model_image,
         estimated_price=payload.estimated_price,
         status='pending',
