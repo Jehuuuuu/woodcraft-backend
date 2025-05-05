@@ -168,7 +168,6 @@ def create_customer_design(request, payload: CreateCustomerDesignSchema):
     )
     return {
         "success": True,
-        "data": customer_design,
         "message": "Customer design created successfully",
     }
 
