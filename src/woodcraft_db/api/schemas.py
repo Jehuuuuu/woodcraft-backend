@@ -36,10 +36,16 @@ class CategorySchema(ModelSchema):
         exclude = ['created_at', 'updated_at']
 
 class ProductSchema(ModelSchema):
+    category_name: str
+
     class Meta:
         model = Product
         fields = '__all__'
         exclude = ['created_at', 'updated_at']
+
+    @staticmethod
+    def resolve_category_name(obj):
+        return obj.category.name
 
 class AddToCartSchema(Schema):
     user: int
