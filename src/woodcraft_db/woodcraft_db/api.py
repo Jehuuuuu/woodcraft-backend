@@ -28,16 +28,29 @@ def set_csrf_token(request):
 def login_view(request, payload: SignInSchema):
     user = authenticate(request, username = payload.email, password = payload.password)
     if user is not None:
-        login(request, user)
-        user_data = {
-            "email": user.email,
-            "firstName": user.first_name,
-            "lastName": user.last_name
-        }
-        response = JSONResponse({"success": True,
-                "user": user_data}
-        )
-        return response
+        if user.is_superuser:
+            login(request, user)
+            user_data = {
+                "email": user.email,
+                "firstName": user.first_name,
+                "lastName": user.last_name,
+                "is_admin": True
+            }
+            response = JSONResponse({"success": True,
+                    "user": user_data}
+            )
+            return response
+        else:
+            login(request, user)
+            user_data = {
+                "email": user.email,
+                "firstName": user.first_name,
+                "lastName": user.last_name
+            }
+            response = JSONResponse({"success": True,
+                    "user": user_data}
+            )
+            return response
     return {"success": False, "message": "Invalid Credentials"}
 
 @api.post("/logout", auth=django_auth)
@@ -58,14 +71,26 @@ def register_view(request, payload: SignUpSchema):
 
 @api.get("/user", auth=django_auth)
 def get_user(request):
-    if request.user:
-        return{ 
-            "success": True,
-            "id": request.user.id,
-            "email": request.user.email,
-            "firstName": request.user.first_name,
-            "lastName": request.user.last_name
-        }
+    user = request.user
+    if user:
+        if user.is_superuser:
+            return {
+                "success": True,
+                "id": request.user.id,
+                "email": request.user.email,
+                "firstName": request.user.first_name,
+                "lastName": request.user.last_name,
+                "is_admin": True
+            }
+        else:
+            return{ 
+                "success": True,
+                "id": request.user.id,
+                "email": request.user.email,
+                "firstName": request.user.first_name,
+                "lastName": request.user.last_name,
+                "is_admin": False
+            }
     else:
         return{
             "message": "User not logged in"
