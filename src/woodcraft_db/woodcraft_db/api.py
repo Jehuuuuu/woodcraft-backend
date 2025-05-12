@@ -10,6 +10,9 @@ from api.ai_service import initiate_task_id, poll_task_status
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.http import HttpResponse
 from django.http import JsonResponse as JSONResponse
+import stripe
+from django.conf import settings
+
 logger = logging.getLogger(__name__)
 
 api = NinjaAPI(csrf=True)
@@ -444,5 +447,83 @@ def delete_cart_item(request, cart_item_id: int):
         return {"message": "Cart item deleted successfully"}
     except CartItem.DoesNotExist:
         return {"error": "Cart item not found"}
+    except Exception as e:
+        return {"error": str(e)}
+
+@api.post("/create-checkout-session", response=CheckoutSessionResponseSchema)
+def create_checkout_session(request, payload: CheckoutSessionSchema):
+    try:
+        user = CustomUser.objects.get(id=payload.user_id)
+        cart = Cart.objects.get(user=user)
+        cart_items = CartItem.objects.filter(cart=cart)
+
+        line_items = []
+        
+        for item in cart_items:
+            if item.product:
+                line_items.append({
+                    'price_data': {
+                        'currency': 'php',
+                        'product_data': {
+                            'name': item.product.name,
+                        },
+                        'unit_amount': int(item.product.price * 100),  # Convert to cents
+                    },
+                    'quantity': item.quantity,
+                })
+            elif item.customer_design:
+                price = item.customer_design.final_price or item.customer_design.estimated_price
+                line_items.append({
+                    'price_data': {
+                        'currency': 'php',
+                        'product_data': {
+                            'name': f'Custom Design - {item.customer_design.design_description}',
+                        },
+                        'unit_amount': int(price * 100),  # Convert to cents
+                    },
+                    'quantity': item.quantity,
+                })
+
+        session = stripe.checkout.Session.create(
+            customer_email=user.email,
+            payment_method_types=['card'],
+            line_items=line_items,
+            mode='payment',
+            success_url=payload.success_url,
+            cancel_url=payload.cancel_url,
+            metadata={
+                'user_id': user.id,
+            }
+        )
+
+        return {
+            "session_id": session.id,
+            "url": session.url
+        }
+
+    except Exception as e:
+        return {"error": str(e)}
+
+@api.post("/webhook")
+def stripe_webhook(request):
+    payload = request.body
+    sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+        )
+
+        if event.type == 'checkout.session.completed':
+            session = event.data.object
+            user_id = session.metadata.get('user_id')
+            
+            # Clear the user's cart after successful payment
+            if user_id:
+                cart = Cart.objects.get(user_id=user_id)
+                CartItem.objects.filter(cart=cart).delete()
+
+        return {"success": True}
+
     except Exception as e:
         return {"error": str(e)}
