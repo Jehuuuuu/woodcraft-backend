@@ -184,6 +184,9 @@ def create_customer_design(request, payload: CreateCustomerDesignSchema):
     customer_design = CustomerDesign.objects.create(
         user = CustomUser.objects.get(id=payload.user_id),
         design_description=payload.design_description,
+        width=payload.width,
+        height=payload.height,
+        thickness=payload.thickness,
         decoration_type=payload.decoration_type,
         material=payload.material,
         model_url=payload.model_url,
@@ -206,6 +209,66 @@ def get_customer_designs(request, user_id: int):
             "success": False,
             "error": str(e),
             "message": "Failed to retrieve customer designs",
+        }
+
+@api.get("/get_all_customer_designs", response=list[FetchCustomerDesignsSchema])
+def get_all_customer_designs(request):
+    try:
+        customer_designs = CustomerDesign.objects.all()
+        return customer_designs
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to retrieve customer designs",
+        }
+
+@api.put("/approve_design/{design_id}")
+def approve_design(request, design_id: int, payload: ApproveDesignSchema):
+    try:
+        customer_design = CustomerDesign.objects.get(id=design_id)
+        customer_design.status = 'approved'
+        customer_design.final_price = payload.final_price
+        customer_design.save()
+        return {
+            "success": True,
+            "message": "Customer design approved successfully",
+        }
+    except CustomerDesign.DoesNotExist:
+        return {
+            "success": False,
+            "error": "Customer design not found",
+            "message": "Failed to approve customer design",
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to approve customer design",
+        }
+    
+@api.put("/reject_design/{design_id}")
+def reject_design(request, design_id: int, payload: RejectDesignSchema):
+    try:
+        customer_design = CustomerDesign.objects.get(id=design_id)
+        customer_design.status = 'rejected'
+        customer_design.notes = payload.message
+        customer_design.save()
+        return {
+            "success": True,
+            "message": "Customer design rejected successfully",
+        }
+    except CustomerDesign.DoesNotExist:
+        return {
+            "success": False,
+            "error": "Customer design not found",
+            "message": "Failed to reject customer design",
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to reject customer design",
         }
 
 @api.get("/get_categories", response=list[CategorySchema])

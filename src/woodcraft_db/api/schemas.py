@@ -24,10 +24,34 @@ class CreateCustomerDesignSchema(Schema):
     material: str
     decoration_type: str
     design_description: str
+    width: float
+    height: float
+    thickness: float
     estimated_price: float
     model_url: str
     model_image: str
+    status:str
+    notes: str = None
+    final_price: float = None
+class FetchCustomerDesignsSchema(ModelSchema):
+    name: str
+    dimensions: str
+    class Meta:
+        model = CustomerDesign
+        fields = '__all__'
+        exclude = ['created_at', 'updated_at', 'notes']
+    @staticmethod
+    def resolve_name(obj):
+        return f"{obj.user.first_name} {obj.user.last_name}"
+    @staticmethod
+    def resolve_dimensions(obj):
+        return f"{obj.width} x {obj.height} x {obj.thickness}"
 
+class ApproveDesignSchema(Schema):
+    final_price: float
+
+class RejectDesignSchema(Schema):
+    message:str
 
 class CategorySchema(ModelSchema):
     class Meta:
