@@ -1,5 +1,6 @@
 from ninja import ModelSchema, Schema
 from .models import CustomUser as User, CustomerDesign, Category, Product, CartItem
+from typing import Optional
 
 class SignInSchema(ModelSchema):
     class Meta:
@@ -33,10 +34,11 @@ class CreateCustomerDesignSchema(Schema):
     status:str
     notes: str = None
     final_price: float = None
+
 class FetchCustomerDesignsSchema(ModelSchema):
     name: str
     dimensions: str
-    final_price: float = None
+    final_price: Optional[float]
     class Meta:
         model = CustomerDesign
         fields = '__all__'
