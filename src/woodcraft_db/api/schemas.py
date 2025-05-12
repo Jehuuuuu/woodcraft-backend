@@ -36,10 +36,11 @@ class CreateCustomerDesignSchema(Schema):
 class FetchCustomerDesignsSchema(ModelSchema):
     name: str
     dimensions: str
+    final_price: float = None
     class Meta:
         model = CustomerDesign
         fields = '__all__'
-        exclude = ['created_at', 'updated_at', 'notes']
+        exclude = ['created_at', 'updated_at']
     @staticmethod
     def resolve_name(obj):
         return f"{obj.user.first_name} {obj.user.last_name}"
@@ -73,12 +74,14 @@ class ProductSchema(ModelSchema):
 
 class AddToCartSchema(Schema):
     user: int
-    product_id: int
+    product_id: int = None
+    design_id: int = None
     quantity: int
 
 class AddToCartResponseSchema(Schema):
     user: int
-    product_id: int
+    product_id: int = None
+    design_id: int = None
     quantity: int
     message:str
 

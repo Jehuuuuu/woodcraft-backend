@@ -199,10 +199,10 @@ def create_customer_design(request, payload: CreateCustomerDesignSchema):
         "message": "Customer design created successfully",
     }
 
-@api.get("/get_customer_designs", response=list[CreateCustomerDesignSchema])
-def get_customer_designs(request, user_id: int):
+@api.get("/get_customer_designs", response=list[FetchCustomerDesignsSchema])
+def get_customer_designs(request, user: int):
     try:
-        customer_designs = CustomerDesign.objects.filter(user=user_id)
+        customer_designs = CustomerDesign.objects.filter(user=user)
         return customer_designs
     except Exception as e:
         return {
@@ -336,26 +336,81 @@ def add_to_cart(request, payload: AddToCartSchema):
             }
     except Exception as e:
         return {"error": str(e)}
+    
+@api.post("add_design_to_cart", response=AddToCartResponseSchema)
+def add_design_to_cart(request, payload: AddToCartSchema):
+    try:
+        # Get the user and their cart
+        user = CustomUser.objects.get(id=payload.user)
+        cart = Cart.objects.get(user=user)
+        design = CustomerDesign.objects.get(id=payload.design_id)
+        quantity = payload.quantity
+
+        add_to_cart = CartItem.objects.create(
+                cart=cart,
+                customer_design=design,
+                quantity=quantity,
+            )
+        design.is_added_to_cart = True
+        design.save()
+        return {
+                "user": payload.user,
+                "product_id": payload.design_id,
+                "quantity": add_to_cart.quantity,
+                "message": "Item added to cart",
+            }
+    except Exception as e:
+        return {"error": str(e)}
 
 @api.get("/cart", response=CartItemSchema)
-def get_cart(request, user : int):
+def get_cart(request, user: int):
     try:
         cart = Cart.objects.get(user=user)
         cart_items = CartItem.objects.filter(cart=cart)
-        return {
-            "cart_items": [
-                {
-                    "cart_item_id_num": item.id,
+        
+        cart_items_list = []
+        total_price = 0
+        total_items = 0
+        
+        for item in cart_items:
+            cart_item_dict = {
+                "cart_item_id_num": item.id,
+                "quantity": item.quantity,
+            }
+            
+            # Handle regular products
+            if item.product:
+                cart_item_dict.update({
                     "product_name": item.product.name,
                     "product_image": item.product.image.url if item.product.image else None,
-                    "quantity": item.quantity,
-                    "price": item.product.price,
-                    "total_price": item.quantity * item.product.price,
-                }
-                for item in cart_items
-            ],
-            "total_price": sum(item.quantity * item.product.price for item in cart_items),
-            "total_items": sum(item.quantity for item in cart_items),
+                    "price": float(item.product.price),
+                    "total_price": float(item.product.price * item.quantity),
+                    "customer_design": None,
+                    "material": None,
+                    "final_price": None,
+                })
+                total_price += item.product.price * item.quantity
+            
+            # Handle customer designs
+            if item.customer_design:
+                cart_item_dict.update({
+                    "product_name": f"Custom Design - {item.customer_design.design_description}",
+                    "product_image": None,
+                    "price": float(item.customer_design.final_price) if item.customer_design.final_price else float(item.customer_design.estimated_price),
+                    "total_price": float(item.customer_design.final_price * item.quantity) if item.customer_design.final_price else float(item.customer_design.estimated_price * item.quantity),
+                    "customer_design": item.customer_design.design_description,
+                    "material": item.customer_design.material,
+                    "final_price": float(item.customer_design.final_price) if item.customer_design.final_price else None,
+                })
+                total_price += (item.customer_design.final_price * item.quantity) if item.customer_design.final_price else (item.customer_design.estimated_price * item.quantity)
+            
+            cart_items_list.append(cart_item_dict)
+            total_items += item.quantity
+
+        return {
+            "cart_items": cart_items_list,
+            "total_price": float(total_price),
+            "total_items": total_items,
         }
     
     except Cart.DoesNotExist:
@@ -379,7 +434,13 @@ def update_cart_item(request, cart_item_id: int, payload: UpdateCartItemSchema):
 def delete_cart_item(request, cart_item_id: int):
     try:
         cart_item = CartItem.objects.get(id=cart_item_id)
-        cart_item.delete()
+        if cart_item.customer_design:
+            design = cart_item.customer_design
+            design.is_added_to_cart = False
+            design.save()
+            cart_item.delete()
+        else:
+            cart_item.delete()
         return {"message": "Cart item deleted successfully"}
     except CartItem.DoesNotExist:
         return {"error": "Cart item not found"}

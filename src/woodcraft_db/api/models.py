@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-
+from django.core.exceptions import ValidationError
 # Create your models here.
 class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
@@ -33,6 +33,7 @@ class CustomerDesign(models.Model):
         ('completed', 'Completed'), 
         ('rejected', 'Rejected') 
     ], default='pending') 
+    is_added_to_cart = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True) 
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -110,11 +111,80 @@ class Cart(models.Model):
 
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, related_name='items', on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField()
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        null=True, 
+        blank=True
+    )
+    customer_design = models.ForeignKey(
+        CustomerDesign,
+        on_delete=models.CASCADE,
+        null=True, 
+        blank=True,
+        limit_choices_to={'status': 'approved'} 
+    )
+    quantity = models.PositiveIntegerField(default=1) 
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                check=(
+                    (models.Q(product__isnull=False) & models.Q(customer_design__isnull=True)) |
+                    (models.Q(product__isnull=True) & models.Q(customer_design__isnull=False))
+                ),
+                name='cartitem_must_be_product_or_customer_design',
+                violation_error_message='CartItem must be linked to either a Product or a Customer Design, but not both.'
+            )
+        ]
+
+    def clean(self):
+        """
+        Custom validation for CartItem.
+        """
+        super().clean()
+        if self.product and self.customer_design:
+            raise ValidationError('CartItem cannot be linked to both a Product and a Customer Design.')
+        if not self.product and not self.customer_design:
+            raise ValidationError('CartItem must be linked to either a Product or a Customer Design.')
+        
+        if self.customer_design:
+            if self.customer_design.status != 'approved':
+                raise ValidationError('Only Customer Designs with "approved" status can be added to the cart.')
+            if self.customer_design.final_price is None:
+                raise ValidationError('Approved Customer Designs must have a final_price to be added to the cart.')
 
     def __str__(self):
-        return f'{self.cart.user} {self.product.name} (x{self.quantity})'
+        if self.product:
+            return f'Product: {self.product.name} (x{self.quantity}) in {self.cart}'
+        elif self.customer_design:
+            return f'Design: {self.customer_design.design_description[:30]}... (x{self.quantity}) in {self.cart}'
+        return f'Invalid CartItem in {self.cart}' 
+    @property
+    def item_name(self):
+        """Returns the name of the cart item."""
+        if self.product:
+            return self.product.name 
+        elif self.customer_design:
+            return self.customer_design.name_for_cart
+        return "N/A"
+
+    @property
+    def unit_price(self):
+        """Returns the unit price of the cart item."""
+        if self.product:
+            return self.product.price 
+        elif self.customer_design:
+            return self.customer_design.price_for_cart
+        return None
+
+    @property
+    def total_price(self):
+        """Calculates the total price for this cart item (unit_price * quantity)."""
+        price = self.unit_price
+        if price is not None and self.quantity > 0:
+            return self.quantity * price
+        return None
 
 class Payment(models.Model):
     order = models.OneToOneField(Order, on_delete=models.CASCADE)
