@@ -450,12 +450,17 @@ def delete_cart_item(request, cart_item_id: int):
     except Exception as e:
         return {"error": str(e)}
 
-@api.post("/create-checkout-session", response=CheckoutSessionResponseSchema)
+@api.post("/create-checkout-session")
 def create_checkout_session(request, payload: CheckoutSessionSchema):
     try:
         user = CustomUser.objects.get(id=payload.user_id)
         cart = Cart.objects.get(user=user)
         cart_items = CartItem.objects.filter(cart=cart)
+
+        if not cart_items.exists():
+            return CheckoutSessionResponseSchema(
+                error="Cart is empty"
+            )
 
         line_items = []
         
@@ -466,8 +471,9 @@ def create_checkout_session(request, payload: CheckoutSessionSchema):
                         'currency': 'php',
                         'product_data': {
                             'name': item.product.name,
+                            'images': [item.product.image.url] if item.product.image else [],
                         },
-                        'unit_amount': int(item.product.price * 100),  # Convert to cents
+                        'unit_amount': int(item.product.price * 100),
                     },
                     'quantity': item.quantity,
                 })
@@ -478,11 +484,17 @@ def create_checkout_session(request, payload: CheckoutSessionSchema):
                         'currency': 'php',
                         'product_data': {
                             'name': f'Custom Design - {item.customer_design.design_description}',
+                            'images': [item.customer_design.model_image] if item.customer_design.model_image else [],
                         },
-                        'unit_amount': int(price * 100),  # Convert to cents
+                        'unit_amount': int(price * 100),
                     },
                     'quantity': item.quantity,
                 })
+
+        if not line_items:
+            return CheckoutSessionResponseSchema(
+                error="No valid items in cart"
+            )
 
         session = stripe.checkout.Session.create(
             customer_email=user.email,
@@ -496,13 +508,21 @@ def create_checkout_session(request, payload: CheckoutSessionSchema):
             }
         )
 
-        return {
-            "session_id": session.id,
-            "url": session.url
-        }
+        return CheckoutSessionResponseSchema(
+            session_id=session.id,
+            url=session.url
+        )
 
+    except CustomUser.DoesNotExist:
+        return CheckoutSessionResponseSchema(error="User not found")
+    except Cart.DoesNotExist:
+        return CheckoutSessionResponseSchema(error="Cart not found")
+    except stripe.error.StripeError as e:
+        return CheckoutSessionResponseSchema(error=str(e))
     except Exception as e:
-        return {"error": str(e)}
+        return CheckoutSessionResponseSchema(
+            error=f"An unexpected error occurred: {str(e)}"
+        )
 
 @api.post("/webhook")
 def stripe_webhook(request):

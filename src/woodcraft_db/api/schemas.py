@@ -96,11 +96,11 @@ class UpdateCartItemSchema(Schema):
     quantity: int
 
 class CheckoutSessionSchema(Schema):
- 
     user_id: int
     success_url: str
     cancel_url: str
 
 class CheckoutSessionResponseSchema(Schema):
-    session_id: str
-    url: str
+    session_id: str | None = None
+    url: str | None = None
+    error: str | None = None
