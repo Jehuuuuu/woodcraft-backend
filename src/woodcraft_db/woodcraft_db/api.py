@@ -457,6 +457,11 @@ def create_checkout_session(request, payload: CheckoutSessionSchema):
         cart = Cart.objects.get(user=user)
         cart_items = CartItem.objects.filter(cart=cart)
 
+        if not user:
+            return CheckoutSessionResponseSchema(
+                error="User not found"
+            )
+
         if not cart_items.exists():
             return CheckoutSessionResponseSchema(
                 error="Cart is empty"
@@ -466,12 +471,16 @@ def create_checkout_session(request, payload: CheckoutSessionSchema):
         
         for item in cart_items:
             if item.product:
+                image = item.product.image.url
+                image_url = f"https://woodcraft-backend.onrender.com{image}"
+                print(image)
+                print(image_url)
                 line_items.append({
                     'price_data': {
                         'currency': 'php',
                         'product_data': {
                             'name': item.product.name,
-                            'images': [item.product.image.url] if item.product.image else [],
+                            'images': [image_url if image_url else []],
                         },
                         'unit_amount': int(item.product.price * 100),
                     },
