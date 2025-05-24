@@ -551,7 +551,6 @@ def create_checkout_session(request, payload: CheckoutSessionSchema):
         return CheckoutSessionResponseSchema(error=f"An unexpected error occurred: {e}")
 
 @csrf_exempt   
-@api.post("/webhook")
 def stripe_webhook(request):
     payload = request.body
     sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
