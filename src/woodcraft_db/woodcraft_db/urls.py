@@ -16,10 +16,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from .api import api, stripe_webhook
+from .api import api
 from django.conf import settings
 from django.conf.urls.static import static
-
+from api.views import stripe_webhook
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', api.urls),
