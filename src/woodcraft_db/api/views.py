@@ -36,7 +36,7 @@ def stripe_webhook(request):
                     quantity = item.quantity
                     unit_price = Decimal(item.price.get("unit_amount", 0) / 100)
 
-                    order_item = CartItem.objects.create(
+                    order_item = Order.objects.create(
                         order = order,
                         product=product,
                         quantity=quantity,
