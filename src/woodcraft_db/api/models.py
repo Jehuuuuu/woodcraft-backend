@@ -86,6 +86,7 @@ class Order(models.Model):
         ('delivered', 'Delivered'),
         ('cancelled', 'Cancelled')
     ], default='pending')
+    address = models.CharField(max_length=500)
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.CharField(max_length=10, default='php')
     created_at = models.DateTimeField(auto_now_add=True)
