@@ -3,7 +3,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 import stripe
 from django.conf import settings
-from .models import Cart, CartItem, Order, CustomUser, Product
+from .models import Cart, CartItem, Order, CustomUser, Product, OrderItem
 from decimal import Decimal
 @csrf_exempt
 def stripe_webhook(request):
