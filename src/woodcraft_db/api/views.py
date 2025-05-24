@@ -3,7 +3,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 import stripe
 from django.conf import settings
-from .models import Cart, CartItem
+from .models import Cart, CartItem, Order
 
 @csrf_exempt
 def stripe_webhook(request):
@@ -17,8 +17,16 @@ def stripe_webhook(request):
         if event.type == "checkout.session.completed":
             session = event.data.object
             user_id = session.metadata.get("user_id")
+            currency = session.metadata.get("currency")
+            total_price=session.amount_total / 100,
             if user_id:
                 CartItem.objects.filter(cart__user_id=user_id).delete()
+                Order.objects.create(
+                    user=user_id,
+                    total_price=total_price,
+                    currency=currency,
+                    status="pending",
+                )
 
         return JsonResponse({"success": True})
 
