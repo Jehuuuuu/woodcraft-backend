@@ -19,7 +19,7 @@ def stripe_webhook(request):
             user_id = session.metadata.get("user_id")
             currency = session.metadata.get("currency")
             total_price=session.amount_total / 100,
-            address = f"{session.shipping.address.line1}, {session.shipping.address.city}, {session.shipping.address.state}, {session.shipping.address.country}, {session.shipping.address.postal_code}"
+            address = f"{session.shipping_details.address.line1}, {session.shipping_details.address.city}, {session.shipping_details.address.state}, {session.shipping_details.address.country}, {session.shipping_details.address.postal_code}"
             if user_id:
                 CartItem.objects.filter(cart__user_id=user_id).delete()
                 user = CustomUser.objects.get(id=user_id)
