@@ -549,3 +549,28 @@ def create_checkout_session(request, payload: CheckoutSessionSchema):
         return CheckoutSessionResponseSchema(error=str(e))
     except Exception as e:
         return CheckoutSessionResponseSchema(error=f"An unexpected error occurred: {e}")
+
+@csrf_exempt   
+@api.post("/webhook")
+def stripe_webhook(request):
+    payload = request.body
+    sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+        )
+
+        if event.type == 'checkout.session.completed':
+            session = event.data.object
+            user_id = session.metadata.get('user_id')
+            
+            # Clear the user's cart after successful payment
+            if user_id:
+                cart = Cart.objects.get(user_id=user_id)
+                CartItem.objects.filter(cart=cart).delete()
+
+        return {"success": True}
+
+    except Exception as e:
+        return {"error": str(e)}
