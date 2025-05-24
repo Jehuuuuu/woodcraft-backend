@@ -88,7 +88,7 @@ class Order(models.Model):
     ], default='pending')
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.CharField(max_length=10, default='php')
-    reated_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
