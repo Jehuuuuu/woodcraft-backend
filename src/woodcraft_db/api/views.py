@@ -3,8 +3,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 import stripe
 from django.conf import settings
-from .models import Cart, CartItem, Order, CustomUser
-
+from .models import Cart, CartItem, Order, CustomUser, Product
+from decimal import Decimal
 @csrf_exempt
 def stripe_webhook(request):
     payload = request.body
@@ -18,18 +18,33 @@ def stripe_webhook(request):
             session = event.data.object
             user_id = session.metadata.get("user_id")
             currency = session.metadata.get("currency")
-            total_price=session.amount_total / 100,
+            total_price=Decimal(session.amount_total / 100)
             address = f"{session.shipping_details.address.line1}, {session.shipping_details.address.city}, {session.shipping_details.address.state}, {session.shipping_details.address.country}, {session.shipping_details.address.postal_code}"
             if user_id:
-                CartItem.objects.filter(cart__user_id=user_id).delete()
+                
                 user = CustomUser.objects.get(id=user_id)
-                Order.objects.create(
+                order = Order.objects.create(
                     user=user,
                     total_price=total_price,
                     address=address,
                     currency=currency,
                     status="pending",
                 )
+                line_items = stripe.checkout.Session.list_line_items(session.id, limit=100)
+                for item in line_items.data:
+                    product = Product.objects.get(description=item.description)
+                    quantity = item.quantity
+                    unit_price = Decimal(item.price.get("unit_amount", 0) / 100)
+
+                    order_item = CartItem.objects.create(
+                        order = order,
+                        product=product,
+                        quantity=quantity,
+                        price=unit_price,
+                    )
+                    
+
+                CartItem.objects.filter(cart__user_id=user_id).delete()
 
         return JsonResponse({"success": True})
 
