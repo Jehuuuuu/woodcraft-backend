@@ -97,6 +97,7 @@ class UpdateCartItemSchema(Schema):
 
 class CheckoutSessionSchema(Schema):
     user_id: int
+    currency: str
     success_url: str
     cancel_url: str
 

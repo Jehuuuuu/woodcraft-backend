@@ -12,10 +12,17 @@ from django.http import HttpResponse
 from django.http import JsonResponse as JSONResponse
 import stripe
 from django.conf import settings
+import os
+from dotenv import load_dotenv
+import requests
+from decimal import Decimal
 
+load_dotenv()
 logger = logging.getLogger(__name__)
 
 api = NinjaAPI(csrf=True)
+FIXER_API_KEY = os.getenv("FIXER_API_KEY")
+FIXER_API_URL = f"http://data.fixer.io/api/latest?access_key={FIXER_API_KEY}&base=EUR"
 
 @api.post("/csrf")
 @ensure_csrf_cookie
@@ -450,6 +457,25 @@ def delete_cart_item(request, cart_item_id: int):
     except Exception as e:
         return {"error": str(e)}
 
+ 
+def get_exchange_rate(currency: str) -> float:
+    params = {
+        "access_key": FIXER_API_KEY,
+        "symbols": "PHP," + currency.upper(),
+    }
+    resp = requests.get(FIXER_API_URL, params=params)
+    data = resp.json()
+    if not data.get("success"):
+        raise Exception("Failed to fetch exchange rates")
+
+    rates = data["rates"]
+    rate_php = rates["PHP"]    
+    rate_target = rates[currency.upper()]    
+
+    conversion_rate = rate_target / rate_php
+
+    return float(conversion_rate)
+
 @api.post("/create-checkout-session")
 def create_checkout_session(request, payload: CheckoutSessionSchema):
     try:
@@ -457,70 +483,63 @@ def create_checkout_session(request, payload: CheckoutSessionSchema):
         cart = Cart.objects.get(user=user)
         cart_items = CartItem.objects.filter(cart=cart)
 
-        if not user:
-            return CheckoutSessionResponseSchema(
-                error="User not found"
-            )
+        currency = payload.currency.lower()
+        if currency == "PHP" or currency == "php":
+            exchange_rate = 1
+        else:
+            exchange_rate = get_exchange_rate(currency)
 
-        if not cart_items.exists():
-            return CheckoutSessionResponseSchema(
-                error="Cart is empty"
-            )
+        if not cart_items:
+            return CheckoutSessionResponseSchema(error="Cart is empty")
 
         line_items = []
-        
         for item in cart_items:
             if item.product:
-                image = item.product.image.url
-                image_url = f"https://woodcraft-backend.onrender.com{image}"
-                print(image)
-                print(image_url)
+                image_url = f"https://woodcraft-backend.onrender.com{item.product.image.url}"
+                unit_amount = int(item.product.price * Decimal(str(exchange_rate)) * 100)
                 line_items.append({
                     'price_data': {
-                        'currency': 'php',
+                        'currency': currency,
                         'product_data': {
                             'name': item.product.name,
-                            'images': [image_url if image_url else []],
+                            'images': [image_url],
                         },
-                        'unit_amount': int(item.product.price * 100),
+                        'unit_amount': unit_amount,
                     },
                     'quantity': item.quantity,
                 })
             elif item.customer_design:
                 price = item.customer_design.final_price or item.customer_design.estimated_price
+                unit_amount = int(price * Decimal(str(exchange_rate)) * 100)
                 line_items.append({
                     'price_data': {
-                        'currency': 'php',
+                        'currency': currency,
                         'product_data': {
                             'name': f'Custom Design - {item.customer_design.design_description}',
                             'images': [item.customer_design.model_image] if item.customer_design.model_image else [],
                         },
-                        'unit_amount': int(price * 100),
+                        'unit_amount': unit_amount,
                     },
                     'quantity': item.quantity,
                 })
 
         if not line_items:
-            return CheckoutSessionResponseSchema(
-                error="No valid items in cart"
-            )
+            return CheckoutSessionResponseSchema(error="No valid items in cart")
 
         session = stripe.checkout.Session.create(
             customer_email=user.email,
             payment_method_types=['card'],
+            billing_address_collection='required',
+            shipping_address_collection={'allowed_countries': ['PH', 'US', 'CA']},
             line_items=line_items,
             mode='payment',
+            currency=currency,
             success_url=payload.success_url,
             cancel_url=payload.cancel_url,
-            metadata={
-                'user_id': user.id,
-            }
+            metadata={'user_id': user.id, 'currency': currency},
         )
 
-        return CheckoutSessionResponseSchema(
-            session_id=session.id,
-            url=session.url
-        )
+        return CheckoutSessionResponseSchema(session_id=session.id, url=session.url)
 
     except CustomUser.DoesNotExist:
         return CheckoutSessionResponseSchema(error="User not found")
@@ -529,30 +548,4 @@ def create_checkout_session(request, payload: CheckoutSessionSchema):
     except stripe.error.StripeError as e:
         return CheckoutSessionResponseSchema(error=str(e))
     except Exception as e:
-        return CheckoutSessionResponseSchema(
-            error=f"An unexpected error occurred: {str(e)}"
-        )
-
-@api.post("/webhook")
-def stripe_webhook(request):
-    payload = request.body
-    sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
-
-    try:
-        event = stripe.Webhook.construct_event(
-            payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
-        )
-
-        if event.type == 'checkout.session.completed':
-            session = event.data.object
-            user_id = session.metadata.get('user_id')
-            
-            # Clear the user's cart after successful payment
-            if user_id:
-                cart = Cart.objects.get(user_id=user_id)
-                CartItem.objects.filter(cart=cart).delete()
-
-        return {"success": True}
-
-    except Exception as e:
-        return {"error": str(e)}
+        return CheckoutSessionResponseSchema(error=f"An unexpected error occurred: {e}")
