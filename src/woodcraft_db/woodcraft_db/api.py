@@ -549,3 +549,50 @@ def create_checkout_session(request, payload: CheckoutSessionSchema):
         return CheckoutSessionResponseSchema(error=str(e))
     except Exception as e:
         return CheckoutSessionResponseSchema(error=f"An unexpected error occurred: {e}")
+
+@api.get("/stripe/session/{session_id}")
+def get_stripe_session(request, session_id: str):
+    try:
+        # Retrieve the session with line items
+        session = stripe.checkout.Session.retrieve(
+            session_id,
+            expand=['line_items', 'customer_details']
+        )
+        
+        return session
+    except stripe.error.StripeError as e:
+        return {"error": str(e)}
+    except Exception as e:
+        return {"error": f"An unexpected error occurred: {e}"}
+    
+@api.get("/get_customer_orders")
+def get_customer_orders(request, user_id: int):
+    try:
+        user = CustomUser.objects.get(id=user_id)
+        orders = Order.objects.filter(user=user).order_by('-created_at')
+        
+        order_list = []
+        for order in orders:
+            order_items = OrderItem.objects.filter(order=order)
+            items_list = []
+            for item in order_items:
+                items_list.append({
+                    "product_name": item.product.name,
+                    "quantity": item.quantity,
+                    "price": float(item.price),
+                })
+            order_list.append({
+                "order_id": order.id,
+                "total_price": float(order.total_price),
+                "currency": order.currency,
+                "status": order.status,
+                "items": items_list,
+                "created_at": order.created_at.isoformat(),
+            })
+        
+        return order_list
+    
+    except CustomUser.DoesNotExist:
+        return {"error": "User not found"}
+    except Exception as e:
+        return {"error": str(e)}

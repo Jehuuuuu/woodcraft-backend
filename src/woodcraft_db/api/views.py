@@ -17,7 +17,7 @@ def stripe_webhook(request):
         if event.type == "checkout.session.completed":
             session = event.data.object
             user_id = session.metadata.get("user_id")
-            currency = session.metadata.get("currency")
+            currency = session.metadata.get("currency").upper()
             total_price=Decimal(session.amount_total / 100)
             address = f"{session.shipping_details.address.line1}, {session.shipping_details.address.city}, {session.shipping_details.address.state}, {session.shipping_details.address.country}, {session.shipping_details.address.postal_code}"
             if user_id:
