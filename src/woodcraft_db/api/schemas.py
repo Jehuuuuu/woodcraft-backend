@@ -1,6 +1,7 @@
 from ninja import ModelSchema, Schema
-from .models import CustomUser as User, CustomerDesign, Category, Product, CartItem
-from typing import Optional
+from .models import CustomUser as User, CustomerDesign, Category, Product, CartItem, Order
+from typing import List, Optional
+import decimal
 
 class SignInSchema(ModelSchema):
     class Meta:
@@ -105,3 +106,34 @@ class CheckoutSessionResponseSchema(Schema):
     session_id: str | None = None
     url: str | None = None
     error: str | None = None
+
+class OrderItemSchema(Schema):
+    product_name: str
+    quantity: int
+    price: decimal.Decimal
+    
+    @staticmethod
+    def resolve_product_name(obj):
+        return obj.product.name if obj.product else None
+
+class OrderSchema(Schema):
+    order_id: int
+    customer: str
+    status: str
+    address: str
+    total_price: decimal.Decimal
+    currency: str
+    created_at: str
+    updated_at: str
+    items: List[OrderItemSchema]
+
+    @staticmethod
+    def resolve_user_id(obj):
+        return obj.user.id
+
+    @staticmethod
+    def resolve_items(obj):
+        return obj.items.all()
+
+class UpdateOrderStatusSchema(Schema):
+    status: str

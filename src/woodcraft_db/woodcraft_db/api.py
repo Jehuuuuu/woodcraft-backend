@@ -578,6 +578,7 @@ def get_customer_orders(request, user_id: int):
             for item in order_items:
                 items_list.append({
                     "product_name": item.product.name,
+                    "customer_design": item.customer_design.design_description if item.customer_design else None,
                     "quantity": item.quantity,
                     "price": float(item.price),
                 })
@@ -594,5 +595,67 @@ def get_customer_orders(request, user_id: int):
     
     except CustomUser.DoesNotExist:
         return {"error": "User not found"}
+    except Exception as e:
+        return {"error": str(e)}
+
+@api.get("/get_all_orders")
+def get_all_orders(request):
+    try:
+        orders = Order.objects.all().order_by('-created_at')
+        order_list = []
+        for order in orders: 
+            order_items = OrderItem.objects.filter(order=order)
+            
+            items_list = []
+            for item in order_items:
+                items_list.append({
+                    "product_name": item.product.name,
+                    "customer_design": item.customer_design.design_description if item.customer_design else None,
+                    "quantity": item.quantity,
+                    "price": item.price,
+                })
+            order_list.append({
+                "order_id": order.id,
+                "name": order.user.first_name + " " + order.user.last_name,
+                "email": order.user.email,
+                "address": order.address,
+                "total_price": float(order.total_price),
+                "currency": order.currency,
+                "items": items_list,
+                "status": order.status.upper(),
+                "date_ordered": order.created_at.strftime('%x'), 
+                "date_updated": order.updated_at.strftime('%x'), 
+            })
+
+        return order_list
+    except Exception as e:
+        return {"error": str(e)}
+
+@api.put("/update_order_status/{order_id}")
+def update_order_status(request, order_id: int, payload: UpdateOrderStatusSchema):
+    try:
+        order = Order.objects.get(id=order_id)
+        order.status = payload.status
+        order.save()
+        return {"message": "Order status updated successfully"}
+    except Order.DoesNotExist:
+        return {"error": "Order not found"}
+    except Exception as e:
+        return {"error": str(e)}
+
+@api.get("get_customers")
+def get_customers(request):
+    try:
+        customers = CustomUser.objects.filter(is_superuser=False).order_by('-date_joined')
+        customer_list = []
+        for customer in customers:
+            customer_list.append({
+                "id": customer.id,
+                "email": customer.email,
+                "first_name": customer.first_name,
+                "last_name": customer.last_name,
+                "date_joined": customer.date_joined.strftime('%Y-%m-%d'),
+            })
+        return customer_list
     except Exception as e:
         return {"error": str(e)}

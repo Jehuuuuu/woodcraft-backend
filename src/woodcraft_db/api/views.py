@@ -3,7 +3,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 import stripe
 from django.conf import settings
-from .models import Cart, CartItem, Order, CustomUser, Product, OrderItem
+from .models import Cart, CartItem, Order, CustomUser, Product, OrderItem, CustomerDesign
 from decimal import Decimal
 @csrf_exempt
 def stripe_webhook(request):
@@ -32,17 +32,37 @@ def stripe_webhook(request):
                 )
                 line_items = stripe.checkout.Session.list_line_items(session.id, limit=100)
                 for item in line_items.data:
-                    product = Product.objects.get(description=item.description)
-                    quantity = item.quantity
-                    unit_price = Decimal(item.price.get("unit_amount", 0) / 100)
+                        try:
+                            unit_price = Decimal(item.amount_total / (item.quantity * 100))
+                        # Check if this is a custom design by looking at the name prefix
+                            if item.description.startswith('Custom Design -'):
 
-                    order_item = OrderItem.objects.create(
-                        order = order,
-                        product=product,
-                        quantity=quantity,
-                        price=unit_price,
-                    )
-                    
+                                design_description = item.description.replace('Custom Design - ', '')
+                                customer_design = CustomerDesign.objects.get(
+                                    user=user,
+                                    design_description=design_description
+                                )
+                                
+                                order_item = OrderItem.objects.create(
+                                    order=order,
+                                    customer_design=customer_design,
+                                    product=None,  # No product for custom designs
+                                    quantity=item.quantity,
+                                    price=unit_price,
+                                )
+                            else:
+                                # Regular product
+                                product = Product.objects.get(name=item.description)
+                                order_item = OrderItem.objects.create(
+                                    order=order,
+                                    product=product,
+                                    customer_design=None,  # No custom design for regular products
+                                    quantity=item.quantity,
+                                    price=unit_price,
+                                )
+                        except (Product.DoesNotExist, CustomerDesign.DoesNotExist) as e:
+                            print(f"Error processing item {item.description}: {str(e)}")
+                            continue
 
                 CartItem.objects.filter(cart__user_id=user_id).delete()
 

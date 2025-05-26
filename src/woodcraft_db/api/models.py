@@ -97,13 +97,22 @@ class Order(models.Model):
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, null=True, blank=True, on_delete=models.SET_NULL)
+    customer_design = models.ForeignKey(CustomerDesign, null=True, blank=True, on_delete=models.SET_NULL)
     quantity = models.PositiveIntegerField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
 
     def __str__(self):
-        return f'{self.product.name} (x{self.quantity})'
+        if self.product:
+            return f'{self.product.name} (x{self.quantity})'
+        return f'Custom Design - {self.customer_design.design_description} (x{self.quantity})'
 
+    def clean(self):
+        if not self.product and not self.customer_design:
+            raise ValidationError('Either product or customer_design must be set')
+        if self.product and self.customer_design:
+            raise ValidationError('Cannot set both product and customer_design')
+        
 class Cart(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
