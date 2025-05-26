@@ -60,8 +60,11 @@ def stripe_webhook(request):
                                     quantity=item.quantity,
                                     price=unit_price,
                                 )
-                        except (Product.DoesNotExist, CustomerDesign.DoesNotExist) as e:
-                            print(f"Error processing item {item.description}: {str(e)}")
+                        except CustomerDesign.DoesNotExist:
+                          print(f"CustomerDesign not found for description: {design_description}")
+                          continue
+                        except Product.DoesNotExist:
+                            print(f"Product not found for description: {item.description}")
                             continue
 
                 CartItem.objects.filter(cart__user_id=user_id).delete()

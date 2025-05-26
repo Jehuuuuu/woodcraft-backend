@@ -577,7 +577,7 @@ def get_customer_orders(request, user_id: int):
             items_list = []
             for item in order_items:
                 items_list.append({
-                    "product_name": item.product.name,
+                    "product_name": item.product.name if item.product else None,
                     "customer_design": item.customer_design.design_description if item.customer_design else None,
                     "quantity": item.quantity,
                     "price": float(item.price),
@@ -609,7 +609,7 @@ def get_all_orders(request):
             items_list = []
             for item in order_items:
                 items_list.append({
-                    "product_name": item.product.name,
+                    "product_name": item.product.name if item.product else None,
                     "customer_design": item.customer_design.design_description if item.customer_design else None,
                     "quantity": item.quantity,
                     "price": item.price,
