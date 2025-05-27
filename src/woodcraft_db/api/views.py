@@ -5,6 +5,9 @@ import stripe
 from django.conf import settings
 from .models import Cart, CartItem, Order, CustomUser, Product, OrderItem, CustomerDesign
 from decimal import Decimal
+import json
+from api.ai_service import initiate_task_id
+
 @csrf_exempt
 def stripe_webhook(request):
     payload = request.body
@@ -75,3 +78,61 @@ def stripe_webhook(request):
         return JsonResponse({"error": "Invalid signature"}, status=400)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
+
+
+@csrf_exempt
+def product_configurator(request):
+    if request.method == "POST":
+        try:
+            payload = json.loads(request.body)  # Parse JSON payload
+            decoration_type_name = payload.get("decoration_type", "").replace('_', ' ').title()
+            design_prompt = f"{decoration_type_name} {payload.get('design_description', '')}"
+            dimensions = {
+                'height': payload.get('height'),
+                'width': payload.get('width'),
+                'thickness': payload.get('thickness')
+            }
+
+            response_data = initiate_task_id(
+                design_prompt=design_prompt,
+                material=payload.get('material'),
+                dimensions=dimensions
+            )
+
+            if not response_data:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Failed to generate 3D model'
+                })
+
+            material_multipliers = {
+                'oak': 1.5,
+                'maple': 1.8,
+                'pine': 0.7,
+                'mahogany': 1.2,
+                'walnut': 2.0
+            }
+
+            complexity_score = min(100, (len(payload.get('design_description', '')) / 150) * 100)
+            size_factor = (payload.get('height', 0) * payload.get('width', 0) * payload.get('thickness', 0)) / 1000
+            base_price = 2500
+            material_factor = material_multipliers.get(payload.get('material'), 1.0)
+            estimated_price = base_price * (complexity_score / 100) * material_factor * max(1, size_factor)
+
+            production_days = int((complexity_score / 10) + (size_factor * 2)) + 5
+            production_time = f"{production_days} days"
+            if production_days > 14:
+                production_weeks = (production_days + 6) // 7
+                production_time = f"{production_weeks} weeks"
+
+            return JsonResponse({
+                'success': True,
+                'estimated_price': float(estimated_price),
+                'complexity_score': complexity_score,
+                'production_time': production_time,
+                'task_id': response_data.get('task_id'),
+                'message': 'Model generation started successfully',
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)

@@ -19,10 +19,11 @@ from django.urls import path
 from .api import api
 from django.conf import settings
 from django.conf.urls.static import static
-from api.views import stripe_webhook
+from api.views import stripe_webhook, product_configurator
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', api.urls),
     path("api/webhook", stripe_webhook, name="stripe-webhook"),
+    path("api/initiate_task_id", product_configurator, name="product_configurator"),
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

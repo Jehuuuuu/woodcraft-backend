@@ -32,7 +32,6 @@ class CreateCustomerDesignSchema(Schema):
     estimated_price: float
     model_url: str
     model_image: str
-    status:str
     notes: str = None
     final_price: float = None
 
