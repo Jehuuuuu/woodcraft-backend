@@ -296,11 +296,59 @@ def create_category(request, payload: CategorySchema):
     category = Category.objects.create(**payload.dict())
     return category
 
-@api.post("/products", response=ProductSchema)
-def create_product(request, payload: ProductSchema):
-    product = Product.objects.create(**payload.dict())
-    return product
+@api.post("/create_product", response=AddProductSchema)
+def create_product(request):
+    try:
+        # Parse the payload from request.POST
+        payload = request.POST
 
+        # Retrieve the category using the category_id from the payload
+        category = Category.objects.get(id=payload.get("category_id"))
+
+        # Handle the uploaded image file
+        image = request.FILES.get("image")
+
+        # Create the product with the associated category and image
+        product = Product.objects.create(
+            name=payload.get("name"),
+            description=payload.get("description"),
+            price=payload.get("price"),
+            stock=payload.get("stock"),
+            featured=payload.get("featured") == "true",  # Convert string to boolean
+            image=image,  # Save the uploaded image
+            default_material=payload.get("default_material"),
+            category=category
+        )
+        return product
+    except Category.DoesNotExist:
+        return {"error": "Category not found"}
+    except Exception as e:
+        return {"error": str(e)}
+
+@api.put("/edit_product/{product_id}", response=ProductSchema)
+def edit_product(request, product_id: int, payload: ProductSchema):
+    try:
+        product = Product.objects.get(id=product_id)
+        for field, value in payload.dict().items():
+            setattr(product, field, value)
+        product.save()
+        return product
+    except Product.DoesNotExist:
+        return {"error": "Product not found"}
+    except Exception as e:
+        return {"error": str(e)}
+
+@api.delete("/delete_product/{product_id}")
+def delete_product(request, product_id: int):
+    try:
+        product = Product.objects.get(id=product_id)
+        product.delete()
+        return {"message": "Product deleted successfully"}
+    except Product.DoesNotExist:
+        return {"error": "Product not found"}
+    except Exception as e:
+        return {"error": str(e)}
+    
 @api.post("add_to_cart", response=AddToCartResponseSchema)
 def add_to_cart(request, payload: AddToCartSchema):
     try:
@@ -652,10 +700,10 @@ def get_customers(request):
             customer_list.append({
                 "id": customer.id,
                 "email": customer.email,
-                "first_name": customer.first_name,
-                "last_name": customer.last_name,
+                "name": customer.first_name + " " + customer.last_name,
                 "date_joined": customer.date_joined.strftime('%Y-%m-%d'),
             })
         return customer_list
     except Exception as e:
         return {"error": str(e)}
+

@@ -73,6 +73,17 @@ class ProductSchema(ModelSchema):
     @staticmethod
     def resolve_category_name(obj):
         return obj.category.name
+    
+class AddProductSchema(Schema):
+    id: Optional[int]  
+    name: str
+    description: Optional[str]
+    price: float
+    stock: Optional[int]
+    featured: Optional[bool]
+    image: Optional[str] 
+    default_material: Optional[str]
+    category_id: int  
 
 class AddToCartSchema(Schema):
     user: int
