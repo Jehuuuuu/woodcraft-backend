@@ -296,33 +296,47 @@ def create_category(request, payload: CategorySchema):
     category = Category.objects.create(**payload.dict())
     return category
 
-@api.post("/create_product", response=AddProductSchema)
+@api.post("/create_product")
 def create_product(request):
     try:
         # Parse the payload from request.POST
         payload = request.POST
+        print("Payload:", payload)  # Debugging
 
         # Retrieve the category using the category_id from the payload
-        category = Category.objects.get(id=payload.get("category_id"))
+        category_id = payload.get("category_id")
+        if not category_id:
+            return {"error": "Category ID is required"}
+        
+        try:
+            category = Category.objects.get(id=category_id)
+        except Category.DoesNotExist:
+            return {"error": "Category not found"}
 
         # Handle the uploaded image file
         image = request.FILES.get("image")
+        print("Image:", image)  # Debugging
 
-        # Create the product with the associated category and image
+        # Use a placeholder image if no image is provided
+        if not image:
+            placeholder_image_path = "media/placeholder.png"  # Path to your placeholder image
+            image = placeholder_image_path
+
+        # Create the product
         product = Product.objects.create(
             name=payload.get("name"),
             description=payload.get("description"),
             price=payload.get("price"),
             stock=payload.get("stock"),
-            featured=payload.get("featured") == "true",  # Convert string to boolean
-            image=image,  # Save the uploaded image
+            featured=payload.get("featured") == "true",
+            image=image,  # Save the uploaded image or placeholder
             default_material=payload.get("default_material"),
-            category=category
+            category=category,
         )
-        return product
-    except Category.DoesNotExist:
-        return {"error": "Category not found"}
+        print("Product created:", product)  # Debugging
+        return {"success": True, "product": product.id}
     except Exception as e:
+        print("Error:", str(e))  # Debugging
         return {"error": str(e)}
 
 @api.put("/edit_product/{product_id}", response=ProductSchema)
