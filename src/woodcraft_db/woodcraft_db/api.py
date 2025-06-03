@@ -300,7 +300,6 @@ def create_category(request, payload: CategorySchema):
 def create_product(request):
     try:
         payload = request.POST
-        print("Payload:", payload)
 
         category_id = payload.get("category_id")
         if not category_id:
@@ -312,11 +311,9 @@ def create_product(request):
             return {"error": "Category not found"}
 
         image = request.FILES.get("image")
-        print("Image:", image)
 
         if not image:
-            placeholder_image_path = "media/placeholder.png"  # Path to your placeholder image
-            image = placeholder_image_path
+            image = None
 
         product = Product.objects.create(
             name=payload.get("name"),
@@ -354,8 +351,7 @@ def edit_product(request, product_id: int):
         image = request.FILES.get("image")
 
         if not image:
-            placeholder_image_path = "media/placeholder.png"
-            image = placeholder_image_path
+            image = None
 
         product.name = payload.get("name", product.name)
         product.description = payload.get("description", product.description)
