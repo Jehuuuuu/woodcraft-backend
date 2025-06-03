@@ -299,11 +299,9 @@ def create_category(request, payload: CategorySchema):
 @api.post("/create_product")
 def create_product(request):
     try:
-        # Parse the payload from request.POST
         payload = request.POST
-        print("Payload:", payload)  # Debugging
+        print("Payload:", payload)
 
-        # Retrieve the category using the category_id from the payload
         category_id = payload.get("category_id")
         if not category_id:
             return {"error": "Category ID is required"}
@@ -313,16 +311,13 @@ def create_product(request):
         except Category.DoesNotExist:
             return {"error": "Category not found"}
 
-        # Handle the uploaded image file
         image = request.FILES.get("image")
-        print("Image:", image)  # Debugging
+        print("Image:", image)
 
-        # Use a placeholder image if no image is provided
         if not image:
             placeholder_image_path = "media/placeholder.png"  # Path to your placeholder image
             image = placeholder_image_path
 
-        # Create the product
         product = Product.objects.create(
             name=payload.get("name"),
             description=payload.get("description"),
@@ -339,14 +334,39 @@ def create_product(request):
         print("Error:", str(e))  # Debugging
         return {"error": str(e)}
 
-@api.put("/edit_product/{product_id}", response=ProductSchema)
-def edit_product(request, product_id: int, payload: ProductSchema):
+@api.post("/edit_product/{product_id}")
+def edit_product(request, product_id: int):
     try:
         product = Product.objects.get(id=product_id)
-        for field, value in payload.dict().items():
-            setattr(product, field, value)
+
+        payload = request.POST
+        print("Payload:", payload)
+
+        category_id = payload.get("category_id")
+        if not category_id:
+            return {"error": "Category ID is required"}
+        
+        try:
+            category = Category.objects.get(id=category_id)
+        except Category.DoesNotExist:
+            return {"error": "Category not found"}
+
+        image = request.FILES.get("image")
+
+        if not image:
+            placeholder_image_path = "media/placeholder.png"
+            image = placeholder_image_path
+
+        product.name = payload.get("name", product.name)
+        product.description = payload.get("description", product.description)
+        product.price = payload.get("price", product.price)
+        product.stock = payload.get("stock", product.stock)
+        product.featured = payload.get("featured", product.featured) == "true"
+        product.image = image  
+        product.default_material = payload.get("default_material", product.default_material)
+        product.category = category
         product.save()
-        return product
+        return {"success": True, "product": product.id}
     except Product.DoesNotExist:
         return {"error": "Product not found"}
     except Exception as e:
