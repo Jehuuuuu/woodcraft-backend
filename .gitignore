@@ -4,3 +4,4 @@ __pycache__
 /migrations
 *.pyc
 /media
+/venv

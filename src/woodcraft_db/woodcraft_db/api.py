@@ -350,15 +350,13 @@ def edit_product(request, product_id: int):
 
         image = request.FILES.get("image")
 
-        if not image:
-            image = None
-
         product.name = payload.get("name", product.name)
         product.description = payload.get("description", product.description)
         product.price = payload.get("price", product.price)
         product.stock = payload.get("stock", product.stock)
         product.featured = payload.get("featured", product.featured) == "true"
-        product.image = image  
+        if image:
+            product.image = image  
         product.default_material = payload.get("default_material", product.default_material)
         product.category = category
         product.save()
