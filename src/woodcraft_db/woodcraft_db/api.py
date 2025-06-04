@@ -349,14 +349,14 @@ def edit_product(request, product_id: int):
             return {"error": "Category not found"}
 
         image = request.FILES.get("image")
-
+        if image:
+            product.image = image
+        print("Image:", image)  
         product.name = payload.get("name", product.name)
         product.description = payload.get("description", product.description)
         product.price = payload.get("price", product.price)
         product.stock = payload.get("stock", product.stock)
         product.featured = payload.get("featured", product.featured) == "true"
-        if image:
-            product.image = image  
         product.default_material = payload.get("default_material", product.default_material)
         product.category = category
         product.save()
