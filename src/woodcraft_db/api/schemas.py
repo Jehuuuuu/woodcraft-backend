@@ -64,6 +64,7 @@ class CategorySchema(ModelSchema):
 
 class ProductSchema(ModelSchema):
     category_name: str
+    is_best_seller: bool  
 
     class Meta:
         model = Product
@@ -73,6 +74,10 @@ class ProductSchema(ModelSchema):
     @staticmethod
     def resolve_category_name(obj):
         return obj.category.name
+
+    @staticmethod
+    def resolve_is_best_seller(obj):
+        return obj.is_best_seller
     
 class AddProductSchema(Schema):
     id: Optional[int]  
@@ -99,6 +104,7 @@ class AddToCartResponseSchema(Schema):
     message:str
 
 class CartItemSchema(Schema):
+    product_id : int | None = None
     cart_items: list
     total_price: float
     total_items: int

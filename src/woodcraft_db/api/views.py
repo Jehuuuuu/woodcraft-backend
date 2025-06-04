@@ -33,6 +33,7 @@ def stripe_webhook(request):
                     currency=currency,
                     status="pending",
                 )
+                
                 line_items = stripe.checkout.Session.list_line_items(session.id, limit=100)
                 for item in line_items.data:
                         try:
@@ -56,6 +57,9 @@ def stripe_webhook(request):
                             else:
                                 # Regular product
                                 product = Product.objects.get(name=item.description)
+                                product.stock -= item.quantity
+                                product.purchase_count += item.quantity
+                                product.save()
                                 order_item = OrderItem.objects.create(
                                     order=order,
                                     product=product,

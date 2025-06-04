@@ -63,7 +63,7 @@ class Product(models.Model):
     description = models.TextField(null=True, blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     stock = models.PositiveIntegerField()
-    # available = models.BooleanField(default=True)
+    purchase_count = models.PositiveIntegerField(default=0)
     featured = models.BooleanField(default=False)
     image = models.ImageField(upload_to='products/', null=True, blank=True)
     default_material = models.CharField(max_length=50, default='oak')  
@@ -76,6 +76,12 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+
+    @property
+    def is_best_seller(self):
+        # Get the product with the highest purchase_count
+        top_product = Product.objects.order_by('-purchase_count').first()
+        return top_product and self.id == top_product.id
 
 class Order(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)

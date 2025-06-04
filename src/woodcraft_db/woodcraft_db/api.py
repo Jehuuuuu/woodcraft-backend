@@ -472,6 +472,16 @@ def get_cart(request, user: int):
             # Handle regular products
             if item.product:
                 cart_item_dict.update({
+                    "product": {
+                        "id": item.product.id,
+                        "name": item.product.name,
+                        "image": item.product.image.url if item.product.image else None,
+                        "price": float(item.product.price),
+                        "stock": item.product.stock,
+                        "featured": item.product.featured,
+                        "default_material": item.product.default_material,
+                        # add other fields as needed
+                    },
                     "product_name": item.product.name,
                     "product_image": item.product.image.url if item.product.image else None,
                     "price": float(item.product.price),
@@ -485,6 +495,7 @@ def get_cart(request, user: int):
             # Handle customer designs
             if item.customer_design:
                 cart_item_dict.update({
+                    "product": None,
                     "product_name": f"Custom Design - {item.customer_design.design_description}",
                     "product_image": None,
                     "price": float(item.customer_design.final_price) if item.customer_design.final_price else float(item.customer_design.estimated_price),
@@ -618,7 +629,37 @@ def create_checkout_session(request, payload: CheckoutSessionSchema):
             success_url=payload.success_url,
             cancel_url=payload.cancel_url,
             metadata={'user_id': user.id, 'currency': currency},
-        )
+            shipping_options=[
+                {
+                    "shipping_rate_data": {
+                        "display_name": "Standard Shipping",
+                        "type": "fixed_amount",
+                        "fixed_amount": {
+                            "amount": 15000,
+                            "currency": currency,
+                        },
+                        "delivery_estimate": {
+                            "minimum": {"unit": "business_day", "value": 3},
+                            "maximum": {"unit": "business_day", "value": 7},
+                        },
+                    }
+                },
+                {
+                    "shipping_rate_data": {
+                        "display_name": "Express Shipping",
+                        "type": "fixed_amount",
+                        "fixed_amount": {
+                            "amount": 25000,
+                            "currency": currency,
+                        },
+                        "delivery_estimate": {
+                            "minimum": {"unit": "business_day", "value": 1},
+                            "maximum": {"unit": "business_day", "value": 2},
+                        },
+                    }
+                }
+            ]
+            )
 
         return CheckoutSessionResponseSchema(session_id=session.id, url=session.url)
 
