@@ -499,6 +499,7 @@ def get_cart(request, user: int):
                     "product_name": f"Custom Design - {item.customer_design.design_description}",
                     "product_image": None,
                     "price": float(item.customer_design.final_price) if item.customer_design.final_price else float(item.customer_design.estimated_price),
+                    "stock": 0,
                     "total_price": float(item.customer_design.final_price * item.quantity) if item.customer_design.final_price else float(item.customer_design.estimated_price * item.quantity),
                     "customer_design": item.customer_design.design_description,
                     "material": item.customer_design.material,

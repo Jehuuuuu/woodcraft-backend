@@ -4,7 +4,11 @@ from django.core.exceptions import ValidationError
 # Create your models here.
 class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
-
+    profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
+    address = models.TextField(blank=True, null=True)
+    phone_number = models.IntegerField(blank=True, null=True)
+    gender = models.CharField(max_length=10, blank=True, null=True)
+    date_of_birth = models.CharField(blank=True, null=True)
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
     
@@ -79,7 +83,6 @@ class Product(models.Model):
 
     @property
     def is_best_seller(self):
-        # Get the product with the highest purchase_count
         top_product = Product.objects.order_by('-purchase_count').first()
         return top_product and self.id == top_product.id
 
