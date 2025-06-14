@@ -6,7 +6,7 @@ class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
     profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
     address = models.TextField(blank=True, null=True)
-    phone_number = models.IntegerField(blank=True, null=True)
+    phone_number = models.CharField(max_length=11,blank=True, null=True)
     gender = models.CharField(max_length=10, blank=True, null=True)
     date_of_birth = models.CharField(blank=True, null=True)
     USERNAME_FIELD = 'email'

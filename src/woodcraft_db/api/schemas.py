@@ -153,3 +153,13 @@ class OrderSchema(Schema):
 
 class UpdateOrderStatusSchema(Schema):
     status: str
+
+class UpdateCustomerInfoSchema(Schema):
+    first_name:str 
+    last_name: str
+    email: str
+    phone_number: int = None
+    address: str = None
+    gender: str = None
+    date_of_birth: str = None
+    profile_picture: str = None

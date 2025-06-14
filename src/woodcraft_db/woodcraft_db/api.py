@@ -55,7 +55,12 @@ def login_view(request, payload: SignInSchema):
             user_data = {
                 "email": user.email,
                 "firstName": user.first_name,
-                "lastName": user.last_name
+                "lastName": user.last_name,
+                "address": user.address,
+                "phoneNumber": user.phone_number,
+                "gender": user.gender,
+                "dateOfBirth": user.date_of_birth,
+                "profilePicture": user.profile_picture.url if user.profile_picture else None,
             }
             response = JSONResponse({"success": True,
                     "user": user_data}
@@ -99,6 +104,10 @@ def get_user(request):
                 "email": request.user.email,
                 "firstName": request.user.first_name,
                 "lastName": request.user.last_name,
+                "address": request.user.address,
+                "phoneNumber": request.user.phone_number,
+                "gender": request.user.gender,
+                "dateOfBirth": request.user.date_of_birth,
                 "is_admin": False
             }
     else:
@@ -337,7 +346,7 @@ def edit_product(request, product_id: int):
         product = Product.objects.get(id=product_id)
 
         payload = request.POST
-        print("Payload:", payload)
+        
 
         category_id = payload.get("category_id")
         if category_id:
@@ -766,7 +775,7 @@ def update_order_status(request, order_id: int, payload: UpdateOrderStatusSchema
     except Exception as e:
         return {"error": str(e)}
 
-@api.get("get_customers")
+@api.get("/get_customers")
 def get_customers(request):
     try:
         customers = CustomUser.objects.filter(is_superuser=False).order_by('-date_joined')
@@ -782,3 +791,37 @@ def get_customers(request):
     except Exception as e:
         return {"error": str(e)}
 
+@api.post("/update_customer_info/{customer_id}")
+def update_customer_info(request, customer_id: int):
+    try:
+        customer = CustomUser.objects.get(id=customer_id)
+        print("Updating customer:", customer.email)
+        payload = request.POST
+        print("Payload:", payload)
+        customer.first_name = payload.get('first_name', customer.first_name)
+        customer.last_name = payload.get('last_name', customer.last_name)
+        customer.email = payload.get('email', customer.email)
+        customer.phone_number = payload.get('phone_number', customer.phone_number)
+        customer.address = payload.get('address', customer.address)
+        customer.gender = payload.get('gender', customer.gender)
+        customer.date_of_birth = payload.get('date_of_birth', customer.date_of_birth)
+
+        profile_picture = request.FILES.get('profile_picture')
+        if profile_picture:
+            if customer.profile_picture:
+                if os.path.isfile(customer.profile_picture.path):
+                    os.remove(customer.profile_picture.path)
+            
+            customer.profile_picture = profile_picture
+
+        customer.save()
+        print("Customer updated:", customer.email)
+        return {
+            "success": True,
+            "message": "Customer information updated successfully",
+        }
+
+    except CustomUser.DoesNotExist:
+        return {"error": "Customer not found"}
+    except Exception as e:
+        return {"error": str(e)}
