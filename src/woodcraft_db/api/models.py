@@ -98,6 +98,9 @@ class Order(models.Model):
     address = models.CharField(max_length=500)
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.CharField(max_length=10, default='php')
+    payment_method = models.CharField(max_length=50, choices=[('cash_on_delivery', 'Cash on Delivery'),
+                                                              ('stripe', 'Stripe'),
+                                                              ('gcash', 'GCash')], default='cash_on_delivery')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

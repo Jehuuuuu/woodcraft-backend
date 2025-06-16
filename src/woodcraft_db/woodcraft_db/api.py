@@ -718,6 +718,7 @@ def get_customer_orders(request, user_id: int):
                 "order_id": order.id,
                 "total_price": float(order.total_price),
                 "currency": order.currency,
+                "payment_method": order.get_payment_method_display(),
                 "status": order.status,
                 "items": items_list,
                 "created_at": order.created_at.isoformat(),
