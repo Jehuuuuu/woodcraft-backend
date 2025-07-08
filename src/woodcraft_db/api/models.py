@@ -14,7 +14,14 @@ class CustomUser(AbstractUser):
     
     def __str__(self):
         return self.email
-    
+
+class CustomerAddress(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    customer_name = models.CharField(max_length=100)
+    customer_phone_number = models.CharField(max_length=11)
+    customer_address = models.TextField()
+    is_default = models.BooleanField(default=False)
+
 class CustomerDesign(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE) 
     design_description = models.CharField(max_length=500) 
