@@ -1,5 +1,5 @@
 from ninja import ModelSchema, Schema
-from .models import CustomUser as User, CustomerDesign, Category, Product, CartItem, Order
+from .models import CustomUser as User, CustomerDesign, Category, Product, CartItem, Order, CustomerAddress
 from typing import List, Optional
 import decimal
 
@@ -163,3 +163,9 @@ class UpdateCustomerInfoSchema(Schema):
     gender: str = None
     date_of_birth: str = None
     profile_picture: str = None
+
+class CustomerAddressSchema(ModelSchema):
+    class Meta: 
+        model = CustomerAddress
+        fields = '__all__'
+        exclude = ['created_at', 'updated_at']

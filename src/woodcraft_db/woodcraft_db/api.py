@@ -826,3 +826,33 @@ def update_customer_info(request, customer_id: int):
         return {"error": "Customer not found"}
     except Exception as e:
         return {"error": str(e)}
+    
+@api.post("/create_customer_address")
+def create_customer_address(request, payload: CustomerAddressSchema):
+    try:
+        user = CustomUser.objects.get(id=payload.user)
+        address = CustomerAddress.objects.create(
+            user=user,
+            customer_name=payload.customer_name,
+            customer_phone_number=payload.customer_phone_number,
+            customer_address=payload.customer_address,
+            is_default=payload.is_default,
+            latitude=payload.latitude,
+            longitude=payload.longitude
+        )
+
+        if payload.is_default:
+            CustomerAddress.objects.filter(user=user, is_default=True).update(is_default=False)
+
+        print(payload)
+        print(payload.user)
+        print("Customer address created:", address.customer_name)
+        return {
+            "success": True,
+            "message": "Customer address created successfully",
+            "address_id": address.id
+        }
+    except CustomUser.DoesNotExist:
+        return {"error": "User not found"}
+    except Exception as e:
+        return {"error": str(e)}

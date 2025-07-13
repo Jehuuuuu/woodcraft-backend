@@ -21,8 +21,13 @@ class CustomerAddress(models.Model):
     customer_phone_number = models.CharField(max_length=11)
     customer_address = models.TextField()
     is_default = models.BooleanField(default=False)
-    latitude = models.FloatField(null=True, blank=True)
-    longitude = models.FloatField(null=True, blank=True)
+    latitude = models.CharField(null=True, blank=True)
+    longitude = models.CharField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'{self.customer_name} - {self.customer_address}'
 
 class CustomerDesign(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE) 
