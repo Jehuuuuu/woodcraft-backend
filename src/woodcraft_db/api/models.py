@@ -21,6 +21,8 @@ class CustomerAddress(models.Model):
     customer_phone_number = models.CharField(max_length=11)
     customer_address = models.TextField()
     is_default = models.BooleanField(default=False)
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
 
 class CustomerDesign(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE) 
