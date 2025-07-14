@@ -828,7 +828,7 @@ def update_customer_info(request, customer_id: int):
         return {"error": str(e)}
     
 @api.post("/create_customer_address")
-def create_customer_address(request, payload: CustomerAddressSchema):
+def create_customer_address(request, payload: CreateCustomerAddressSchema):
     try:
         user = CustomUser.objects.get(id=payload.user)
         address = CustomerAddress.objects.create(
@@ -843,15 +843,41 @@ def create_customer_address(request, payload: CustomerAddressSchema):
 
         if payload.is_default:
             CustomerAddress.objects.filter(user=user, is_default=True).update(is_default=False)
+            address.is_default = True
+            address.save()
 
-        print(payload)
-        print(payload.user)
-        print("Customer address created:", address.customer_name)
+       
         return {
             "success": True,
             "message": "Customer address created successfully",
             "address_id": address.id
         }
+    except CustomUser.DoesNotExist:
+        return {"error": "User not found"}
+    except Exception as e:
+        return {"error": str(e)}
+    
+@api.get("/get_customer_address/{user_id}", response=GetCustomerAddressSchema)
+def get_customer_address(request, user_id: int):
+    try:
+        user = CustomUser.objects.get(id=user_id)
+        addresses = CustomerAddress.objects.filter(user=user)
+
+        address_list = []
+        for address in addresses:
+            address_list.append({
+                "id": address.id,
+                "customer_name": address.customer_name,
+                "customer_phone_number": address.customer_phone_number,
+                "customer_address": address.customer_address,
+                "is_default": address.is_default,
+                "latitude": address.latitude,
+                "longitude": address.longitude,
+            })
+        return {
+            "success": True,
+            "addresses": address_list
+        }   
     except CustomUser.DoesNotExist:
         return {"error": "User not found"}
     except Exception as e:

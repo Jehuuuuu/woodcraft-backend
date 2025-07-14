@@ -164,8 +164,22 @@ class UpdateCustomerInfoSchema(Schema):
     date_of_birth: str = None
     profile_picture: str = None
 
-class CustomerAddressSchema(ModelSchema):
+class CreateCustomerAddressSchema(ModelSchema):
     class Meta: 
         model = CustomerAddress
         fields = '__all__'
         exclude = ['created_at', 'updated_at']
+
+class BaseAddressSchema(Schema):
+    id:int
+    customer_name:str
+    customer_phone_number:str
+    customer_address:str
+    is_default:bool
+    latitude: Optional[str] = None
+    longitude: Optional[str] = None
+
+class GetCustomerAddressSchema(Schema):
+    success: bool = None
+    addresses: List[BaseAddressSchema]
+    error: Optional[str] = None
