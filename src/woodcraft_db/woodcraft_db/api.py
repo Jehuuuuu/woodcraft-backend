@@ -882,3 +882,71 @@ def get_customer_address(request, user_id: int):
         return {"error": "User not found"}
     except Exception as e:
         return {"error": str(e)}
+
+@api.put("/set_default_address/{address_id}")
+def set_default_address(request, address_id: int):
+    try:
+        address = CustomerAddress.objects.get(id=address_id)
+        user = address.user
+
+        CustomerAddress.objects.filter(user=user, is_default=True).update(is_default=False)
+
+        address.is_default = True
+        address.save()
+
+        return {
+            "success": True,
+            "message": "Default address updated successfully",
+            "address_id": address.id
+        }
+    
+    except CustomerAddress.DoesNotExist:
+        return {"error": "Address not found"}
+    except Exception as e:
+        return {"error": str(e)}
+    
+
+@api.put("/update_customer_address/{address_id}")
+def update_customer_address(request, address_id: int, payload: BaseAddressSchema):
+    try:
+        address = CustomerAddress.objects.get(id=address_id)
+        address.customer_name = payload.customer_name
+        address.customer_phone_number = payload.customer_phone_number
+        address.customer_address = payload.customer_address
+        address.latitude = payload.latitude
+        address.longitude = payload.longitude
+
+        if payload.is_default:
+            CustomerAddress.objects.filter(user=address.user, is_default=True).update(is_default=False)
+            address.is_default = True
+        else:
+            address.is_default = False
+
+        address.save()
+        
+        return {
+            "success": True,
+            "message": "Customer address updated successfully",
+            "address_id": address.id
+        }
+    except CustomerAddress.DoesNotExist:
+        return {"error": "Address not found"}
+    except Exception as e:
+        return {"error": str(e)}
+
+@api.delete("/delete_customer_address/{address_id}")
+def delete_customer_address(request, address_id: int):
+    try:
+        address = CustomerAddress.objects.get(id=address_id)
+        if address.is_default:
+            return {"error": "Cannot delete default address. Please set another address as default first."}
+        
+        address.delete()
+        return {
+            "success": True,
+            "message": "Customer address deleted successfully"
+        }
+    except CustomerAddress.DoesNotExist:
+        return {"error": "Address not found"}
+    except Exception as e:
+        return {"error": str(e)}
