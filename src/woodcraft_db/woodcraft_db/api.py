@@ -835,6 +835,12 @@ def create_customer_address(request, payload: CreateCustomerAddressSchema):
             user=user,
             customer_name=payload.customer_name,
             customer_phone_number=payload.customer_phone_number,
+            region=payload.region,
+            province=payload.province,
+            city=payload.city,
+            barangay=payload.barangay,
+            postal_code=payload.postal_code,
+            street=payload.street,
             customer_address=payload.customer_address,
             is_default=payload.is_default,
             latitude=payload.latitude,
@@ -861,7 +867,7 @@ def create_customer_address(request, payload: CreateCustomerAddressSchema):
 def get_customer_address(request, user_id: int):
     try:
         user = CustomUser.objects.get(id=user_id)
-        addresses = CustomerAddress.objects.filter(user=user)
+        addresses = CustomerAddress.objects.filter(user=user).order_by('-updated_at')
 
         address_list = []
         for address in addresses:
@@ -869,6 +875,12 @@ def get_customer_address(request, user_id: int):
                 "id": address.id,
                 "customer_name": address.customer_name,
                 "customer_phone_number": address.customer_phone_number,
+                "region": address.region,
+                "province": address.province,
+                "city": address.city,
+                "barangay": address.barangay,
+                "postal_code": address.postal_code,
+                "street": address.street,
                 "customer_address": address.customer_address,
                 "is_default": address.is_default,
                 "latitude": address.latitude,
@@ -909,9 +921,16 @@ def set_default_address(request, address_id: int):
 @api.put("/update_customer_address/{address_id}")
 def update_customer_address(request, address_id: int, payload: BaseAddressSchema):
     try:
+        print(payload)
         address = CustomerAddress.objects.get(id=address_id)
         address.customer_name = payload.customer_name
         address.customer_phone_number = payload.customer_phone_number
+        address.region = payload.region
+        address.province = payload.province
+        address.city = payload.city
+        address.barangay = payload.barangay
+        address.postal_code = payload.postal_code
+        address.street = payload.street
         address.customer_address = payload.customer_address
         address.latitude = payload.latitude
         address.longitude = payload.longitude

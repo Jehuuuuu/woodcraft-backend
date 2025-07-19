@@ -171,9 +171,15 @@ class CreateCustomerAddressSchema(ModelSchema):
         exclude = ['created_at', 'updated_at']
 
 class BaseAddressSchema(Schema):
-    id:int
+    id:Optional[int] = None
     customer_name:str
     customer_phone_number:str
+    region:str
+    province:str
+    city:str
+    barangay:str
+    postal_code:str
+    street:str
     customer_address:str
     is_default:bool
     latitude: Optional[str] = None
